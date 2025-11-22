@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumini - Social</title>
+    <link rel="icon" href="https://i.ibb.co/XZVSKkBT/Screenshot-2025-11-10-174930-Photoroom.png" type="image/x-icon">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Montserrat', 'sans-serif'],
+                    },
+                    colors: {
+                        lumini: {
+                            blue: '#2563eb',
+                            purple: '#9333ea',
+                            dark: '#0f172a',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(10px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(226, 232, 240, 0.8); }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+        .sidebar-link { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; font-weight: 500; font-size: 0.95rem; color: #475569; transition: all 0.2s; cursor: pointer; }
+        .sidebar-link:hover { background-color: #e2e8f0; color: #1e293b; }
+        .sidebar-link i { width: 24px; font-size: 1.2rem; }
+        .sidebar-link.active { background-color: #eff6ff; color: #2563eb; font-weight: 600; }
+        body { background-color: #f0f2f5; background-image: radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.05) 0%, transparent 20%), radial-gradient(circle at 90% 80%, rgba(147, 51, 234, 0.05) 0%, transparent 20%); background-attachment: fixed; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+        .text-gradient { background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .bg-gradient-lumini { background: linear-gradient(to right, #2563eb, #9333ea); }
+        #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 100; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; opacity: 0; transition: opacity 0.3s, bottom 0.3s; }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+        .msg-bubble { max-width: 80%; padding: 10px 15px; border-radius: 15px; position: relative; word-wrap: break-word; font-size: 0.9rem; }
+        .msg-me { background: #2563eb; color: white; border-bottom-right-radius: 2px; margin-left: auto; }
+        .msg-them { background: #f1f5f9; color: #334155; border-bottom-left-radius: 2px; margin-right: auto; }
+        .profile-tab { cursor: pointer; padding-bottom: 8px; color: #64748b; font-weight: 500; transition: all 0.2s; border-bottom: 2px solid transparent; }
+        .profile-tab.active { color: #2563eb; border-bottom-color: #2563eb; }
+        .profile-tab:hover { color: #334155; }
+        .notification-dot { position: absolute; top: -2px; right: -2px; width: 12px; height: 12px; background-color: #ef4444; border-radius: 50%; border: 2px solid white; display: none; }
+    </style>
+</head>
+<body class="text-slate-800 font-sans antialiased overflow-x-hidden selection:bg-blue-100 selection:text-blue-900">
+
+    <div id="app" class="min-h-screen flex flex-col transition-all duration-500">
+        
+        <nav class="glass fixed top-0 w-full z-50 h-16 transition-all duration-300 shadow-sm">
+            <div class="max-w-[1440px] mx-auto h-full flex items-center justify-between px-4 lg:px-6">
+                <div class="flex items-center gap-2 cursor-pointer w-1/4" onclick="window.location.reload()">
+                    <img src="https://i.ibb.co/XZVSKkBT/Screenshot-2025-11-10-174930-Photoroom.png" alt="Lumini Logo" class="w-9 h-9 object-contain">
+                    <span class="font-heading font-bold text-2xl tracking-tight text-gradient hidden sm:block">Lumini</span>
+                </div>
+
+                <div class="hidden md:flex relative items-center justify-center w-1/2">
+                    <div class="relative w-full max-w-md">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                        <input id="global-search" type="text" placeholder="Search Lumini..." class="w-full bg-slate-100 border-transparent focus:bg-white focus:ring-2 focus:ring-blue-100 rounded-full pl-10 pr-4 py-2.5 text-sm outline-none transition-all text-slate-700" autocomplete="off" oninput="handleSearch(this.value)" onfocus="handleSearch(this.value)" onblur="setTimeout(()=>document.getElementById('search-dropdown').classList.add('hidden'), 200)">
+                        <div id="search-dropdown" class="absolute top-14 left-0 w-full bg-white rounded-xl shadow-xl border border-slate-100 hidden overflow-hidden z-50"></div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end w-1/4 gap-2 sm:gap-4">
+                    <button onclick="router('messaging')" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors text-slate-600 relative">
+                        <i class="fa-brands fa-facebook-messenger text-xl"></i>
+                        <div id="chat-badge" class="notification-dot"></div>
+                    </button>
+                    
+                    <div class="relative">
+                        <button onclick="toggleNotificationDropdown()" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors text-slate-600 relative">
+                            <i class="fa-solid fa-bell text-xl"></i>
+                            <div id="notification-badge" class="notification-dot"></div>
+                        </button>
+                        <div id="notification-dropdown" class="hidden absolute right-0 top-12 w-80 bg-white rounded-xl shadow-xl border border-slate-100 py-2 animate-fade-in z-50 max-h-96 overflow-y-auto custom-scrollbar">
+                            <div class="px-4 py-2 border-b border-slate-100"><h3 class="font-bold text-sm text-slate-800">Notifications</h3></div>
+                            <div id="notification-list" class="p-2">
+                                <p class="text-center text-xs text-slate-400 py-4">No new notifications.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div onclick="toggleProfileMenu()" class="ml-2 relative cursor-pointer">
+                        <img id="nav-avatar" src="https://placehold.co/100x100?text=User" class="w-9 h-9 rounded-full ring-2 ring-white shadow-md object-cover hover:ring-blue-400 transition-all">
+                        <div id="profile-menu" class="hidden absolute right-0 top-12 w-56 bg-white rounded-xl shadow-xl border border-slate-100 py-2 animate-fade-in z-50">
+                            <div class="px-4 py-3 border-b border-slate-100 mb-2 flex items-center gap-3" onclick="viewMyProfile()">
+                                <img id="menu-avatar-small" src="" class="w-10 h-10 rounded-full bg-slate-200">
+                                <div><p id="menu-name" class="font-bold text-sm text-slate-800">Guest</p><p class="text-xs text-slate-500">See your profile</p></div>
+                            </div>
+                            <a href="#" onclick="openSettingsModal()" class="flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"><i class="fa-solid fa-gear text-slate-400"></i> Settings & Privacy</a>
+                            <a href="#" onclick="handleSignOut()" class="flex items-center gap-3 px-4 py-2 text-sm text-red-500 hover:bg-red-50"><i class="fa-solid fa-right-from-bracket"></i> Log Out</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div id="auth-overlay" class="fixed inset-0 bg-slate-50 z-[60] flex items-center justify-center p-4 md:p-8 transition-all duration-500 overflow-hidden">
+            <div class="shape-blob blob-1 rounded-full"></div>
+            <div class="shape-blob blob-2 rounded-full"></div>
+            <div class="relative w-full max-w-5xl h-full md:h-[650px] bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden flex flex-col md:flex-row">
+                <div class="w-full md:w-1/2 bg-gradient-to-br from-blue-600 to-purple-700 p-8 md:p-12 flex flex-col justify-between relative overflow-hidden text-white">
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-3 mb-8"><img src="https://i.ibb.co/XZVSKkBT/Screenshot-2025-11-10-174930-Photoroom.png" class="w-12 h-12 object-contain drop-shadow-lg"><span class="font-heading font-bold text-2xl tracking-tight">Lumini</span></div>
+                        <h1 class="font-heading text-4xl md:text-5xl font-bold leading-tight mb-6">Connect. <br> Collaborate. <br> Create.</h1>
+                        <p class="text-blue-100 text-lg font-light mb-8">Join the community where developers and creators build the future together.</p>
+                    </div>
+                </div>
+                <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-white/50">
+                    <div class="max-w-sm mx-auto w-full">
+                        <h2 class="font-heading text-2xl font-bold text-slate-900 mb-2">Get Started</h2>
+                        <p class="text-slate-500 mb-8 text-sm">Create an account or sign in.</p>
+                        <div class="space-y-4">
+                            <button onclick="handleGoogleAuth()" class="w-full bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3 rounded-xl flex items-center justify-center gap-3 transition-all shadow-sm"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5"> Continue with Google</button>
+                            <div class="relative flex py-2 items-center"><div class="flex-grow border-t border-slate-200"></div><span class="flex-shrink mx-4 text-slate-400 text-xs font-semibold uppercase">Or with email</span><div class="flex-grow border-t border-slate-200"></div></div>
+                            <input id="auth-email" type="email" placeholder="Email" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500 transition-all">
+                            <input id="auth-password" type="password" placeholder="Password" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500 transition-all">
+                            <button onclick="handleEmailAuth()" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition-all">Sign In / Sign Up</button>
+                        </div>
+                        <p id="auth-error" class="text-red-500 text-xs mt-4 text-center hidden"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <main class="flex-grow pt-20 pb-6 px-4">
+            <div class="max-w-[1440px] mx-auto grid grid-cols-1 md:grid-cols-12 gap-8">
+                
+                <aside class="hidden md:block md:col-span-3 space-y-2 sticky top-24 h-fit">
+                    <div onclick="viewMyProfile()" class="sidebar-link mb-4 hover:bg-slate-200 rounded-xl transition-colors">
+                        <img id="sidebar-mini-avatar" src="" class="w-9 h-9 rounded-full object-cover bg-slate-300">
+                        <span id="sidebar-mini-name" class="font-bold text-slate-800 text-sm">Guest</span>
+                    </div>
+                    <div onclick="router('feed')" class="sidebar-link active" id="nav-link-feed"><i class="fa-solid fa-house text-blue-500"></i> <span>Home</span></div>
+                    <div onclick="viewMyProfile()" class="sidebar-link" id="nav-link-profile"><i class="fa-solid fa-user text-blue-500"></i> <span>Profile</span></div>
+                    <div onclick="router('network')" class="sidebar-link" id="nav-link-network"><i class="fa-solid fa-user-group text-blue-500"></i> <span>Network</span></div>
+                    <div onclick="router('messaging')" class="sidebar-link" id="nav-link-messaging"><i class="fa-solid fa-comment-dots text-blue-500"></i> <span>Messages</span></div>
+                    <div onclick="router('saved')" class="sidebar-link" id="nav-link-saved"><i class="fa-solid fa-bookmark text-purple-600"></i> <span>Saved</span></div>
+                    <div class="border-t border-slate-300 my-2 mx-2"></div>
+                    <div onclick="window.open('https://luminiroyalacademy.github.io/Lumini/', '_blank')" class="sidebar-link"><i class="fa-solid fa-book-open text-slate-600"></i> <span>Documentation</span></div>
+                    <div onclick="openSettingsModal()" class="sidebar-link"><i class="fa-solid fa-gear text-slate-600"></i> <span>Settings</span></div>
+                    <div class="mt-8 px-4 text-[10px] text-slate-400 leading-relaxed">Lumini © 2025 · Privacy · Terms · Cookies · More</div>
+                </aside>
+
+                <section id="main-container" class="md:col-span-6 col-span-12">
+                    
+                    <div id="view-feed" class="view-section space-y-6">
+                        <div class="glass-card rounded-2xl p-4 bg-white">
+                            <div class="flex gap-4 mb-4">
+                                <img id="composer-avatar" src="https://placehold.co/100x100?text=User" class="w-12 h-12 rounded-full bg-slate-100 object-cover">
+                                <div onclick="openPostModal()" class="flex-grow bg-slate-100 hover:bg-slate-200 rounded-full px-5 py-3 cursor-pointer transition-colors text-slate-500 text-sm font-medium flex items-center">What's on your mind, <span id="composer-name-placeholder" class="ml-1">User</span>?</div>
+                            </div>
+                            <div class="flex justify-between items-center pt-3 border-t border-slate-100">
+                                <div class="flex gap-1">
+                                    <button onclick="openPostModal('image')" class="px-4 py-2 text-slate-500 hover:bg-slate-50 rounded-lg transition-colors text-sm font-medium flex items-center gap-2"><i class="fa-solid fa-image text-green-500"></i> Photo/Video</button>
+                                    <button onclick="openPostModal('project')" class="px-4 py-2 text-slate-500 hover:bg-slate-50 rounded-lg transition-colors text-sm font-medium flex items-center gap-2"><i class="fa-solid fa-rocket text-blue-500"></i> Project</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="feed-stream" class="space-y-5 pb-20"><div class="text-center py-12"><i class="fa-solid fa-circle-notch fa-spin text-blue-500 text-2xl"></i></div></div>
+                    </div>
+
+                    <div id="view-saved" class="view-section hidden space-y-6">
+                        <div class="glass-card rounded-2xl p-6 bg-white mb-4">
+                            <h2 class="font-heading font-bold text-2xl text-slate-800 flex items-center gap-3"><i class="fa-solid fa-bookmark text-purple-600"></i> Saved Posts</h2>
+                            <p class="text-slate-500 text-sm mt-1">Only you can see what you've saved.</p>
+                        </div>
+                        <div id="saved-posts-stream" class="space-y-5 pb-20"></div>
+                    </div>
+
+                    <div id="view-network" class="view-section hidden space-y-4">
+                        <div class="glass-card rounded-2xl p-6 mb-6 bg-white">
+                            <h2 class="font-heading font-bold text-2xl text-slate-800">Grow your Network</h2>
+                            <p class="text-slate-500 text-sm mt-1">Find collaborators. <span class="text-xs text-slate-400">(Real users appear here)</span></p>
+                        </div>
+                        <div id="network-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+                    </div>
+
+                    <div id="view-profile" class="view-section hidden space-y-6 animate-fade-in">
+                        <div class="glass-card rounded-2xl overflow-hidden bg-white">
+                            <div class="h-40 bg-gradient-to-r from-blue-500 to-purple-600 relative">
+                                <button onclick="router('feed')" class="absolute top-4 left-4 bg-black/30 hover:bg-black/50 text-white px-4 py-2 rounded-full backdrop-blur transition-all text-sm font-bold"><i class="fa-solid fa-arrow-left mr-2"></i> Back</button>
+                            </div>
+                            <div class="px-6 pb-6 relative">
+                                <div class="flex flex-col sm:flex-row items-end -mt-12 mb-4 gap-4">
+                                    <div class="relative">
+                                        <div class="w-32 h-32 rounded-full border-4 border-white shadow-lg bg-white overflow-hidden relative z-10">
+                                            <img id="profile-page-avatar" src="" class="w-full h-full object-cover">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex-grow mb-2 text-center sm:text-left">
+                                        <h2 id="profile-page-name" class="font-heading font-bold text-3xl text-slate-800">User Name</h2>
+                                        <p id="profile-page-headline" class="text-slate-500 font-medium text-sm">Headline</p>
+                                    </div>
+                                    
+                                    <div class="flex gap-2 mb-3">
+                                         <button id="edit-profile-btn" onclick="openEditProfileModal()" class="bg-slate-200 text-slate-700 px-6 py-2 rounded-lg font-bold text-sm hover:bg-slate-300 transition-all hidden flex items-center gap-2">
+                                            <i class="fa-solid fa-pen"></i> Edit Profile
+                                        </button>
+                                         <button id="follow-btn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 transition-all shadow-md flex items-center gap-2 hidden">
+                                            <i class="fa-solid fa-user-plus"></i> Follow
+                                        </button>
+                                        <button id="profile-chat-btn" class="bg-slate-200 text-slate-700 px-6 py-2 rounded-lg font-bold text-sm hover:bg-slate-300 transition-all flex items-center gap-2 hidden">
+                                            <i class="fa-brands fa-facebook-messenger"></i> Message
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="border-t border-slate-200 pt-4 flex gap-8 text-sm font-semibold">
+                                    <div onclick="switchProfileTab('posts')" id="tab-posts" class="profile-tab active">Posts</div>
+                                    <div onclick="switchProfileTab('about')" id="tab-about" class="profile-tab">About</div>
+                                    <div onclick="switchProfileTab('saved')" id="tab-saved" class="profile-tab hidden">Saved</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="md:col-span-1 space-y-4">
+                                <div class="glass-card rounded-2xl p-5 bg-white">
+                                    <h3 class="font-bold text-slate-800 mb-3 text-lg">Intro</h3>
+                                    <p id="profile-page-bio" class="text-sm text-slate-600 mb-4 leading-relaxed whitespace-pre-line">No bio yet.</p>
+                                    <div class="text-xs text-slate-400 flex items-center gap-2 mb-2"><i class="fa-solid fa-clock"></i> Joined <span id="profile-join-date">...</span></div>
+                                </div>
+                            </div>
+                            
+                            <div class="md:col-span-2">
+                                <div id="profile-content-posts" class="space-y-6"></div>
+                                <div id="profile-content-about" class="hidden glass-card rounded-2xl p-6 bg-white">
+                                    <h3 class="font-bold text-xl mb-4">Full Bio</h3>
+                                    <p id="profile-full-bio" class="text-slate-700 leading-relaxed whitespace-pre-line">No details available.</p>
+                                </div>
+                                <div id="profile-content-saved" class="hidden space-y-6"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="view-messaging" class="view-section hidden h-[calc(100vh-140px)] glass-card rounded-2xl flex overflow-hidden border border-slate-200">
+                        <div class="w-1/3 border-r border-slate-100 bg-slate-50/50 flex flex-col">
+                            <div class="p-4 border-b border-slate-100"><h3 class="font-heading font-bold text-slate-800">Chats</h3></div>
+                            <div id="chat-list" class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar"></div>
+                        </div>
+                        <div class="w-2/3 flex flex-col bg-white relative">
+                            <div id="chat-header" class="h-16 border-b border-slate-100 flex items-center px-6 justify-between bg-white/80 backdrop-blur"><span class="font-bold text-slate-400 text-sm">Select a conversation</span></div>
+                            <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/30 custom-scrollbar flex flex-col"><div class="flex h-full items-center justify-center text-slate-400 text-sm flex-col gap-2"><i class="fa-regular fa-paper-plane text-4xl mb-2 opacity-50"></i><p>Select a user to start chatting.</p></div></div>
+                            <div class="p-4 border-t border-slate-100 bg-white">
+                                <form id="message-form" class="flex gap-2" onsubmit="sendMessage(event)">
+                                    <input id="message-input" type="text" placeholder="Type a message..." class="flex-1 bg-slate-100 border-transparent focus:bg-white focus:border-blue-500 rounded-full px-4 py-3 outline-none transition-all text-sm" disabled>
+                                    <button id="message-send-btn" type="submit" class="text-blue-600 text-xl px-2 hover:text-blue-700 transition-colors disabled:opacity-50" disabled><i class="fa-solid fa-paper-plane"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <aside id="right-sidebar" class="hidden md:block md:col-span-3 space-y-6 sticky top-24 h-fit">
+                    <div class="glass-card rounded-2xl p-5 bg-white">
+                        <h3 class="font-heading font-bold text-slate-500 text-sm mb-4 uppercase">Documentation</h3>
+                        <div onclick="window.open('https://luminiroyalacademy.github.io/Lumini/', '_blank')" class="flex items-start gap-3 mb-4 cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition group">
+                            <div class="w-20 h-20 bg-slate-200 rounded-lg overflow-hidden flex-shrink-0 relative">
+                                <img src="https://i.postimg.cc/pL3qStZD/Screenshot-2025-11-22-212117.png" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                            </div>
+                            <div>
+                                <p class="font-bold text-sm text-slate-800 group-hover:text-blue-600 transition-colors">Project Lumini: Documentation</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-card rounded-2xl p-5 bg-white">
+                        <h3 class="font-heading font-bold text-slate-500 text-sm mb-4 uppercase">Community Highlights</h3>
+                        <div id="lumini-news-content"><p class="text-xs text-gray-400">Trending discussions will appear here.</p></div>
+                    </div>
+                </aside>
+            </div>
+        </main>
+
+        <div id="settings-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[85] hidden flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-slide-up">
+                <div class="flex justify-between items-center p-5 border-b border-slate-100">
+                    <h3 class="font-heading font-bold text-lg text-slate-800">Settings & Privacy</h3>
+                    <button onclick="closeSettingsModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="p-6 space-y-6">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Display Name (Username)</label>
+                        <input id="settings-username" type="text" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500">
+                    </div>
+                    <div class="border-t border-slate-100 pt-4">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Account Security</label>
+                        <button onclick="resetPassword()" class="w-full flex items-center justify-center gap-2 p-3 border border-red-200 text-red-600 rounded-xl hover:bg-red-50 transition-colors font-semibold">
+                            <i class="fa-solid fa-key"></i> Reset Password via Email
+                        </button>
+                    </div>
+                </div>
+                <div class="p-5 bg-slate-50 border-t border-slate-100 flex justify-end">
+                    <button onclick="saveSettings()" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-xl hover:bg-blue-700 transition-colors">Save Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="edit-profile-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80] hidden flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-slide-up">
+                <div class="flex justify-between items-center p-5 border-b border-slate-100">
+                    <h3 class="font-heading font-bold text-lg text-slate-800">Edit Profile</h3>
+                    <button onclick="closeEditProfileModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="flex justify-center mb-4">
+                        <div class="relative group cursor-pointer" onclick="document.getElementById('pfp-upload-modal').click()">
+                            <img id="edit-modal-avatar" src="https://placehold.co/200x200" class="w-24 h-24 rounded-full border-4 border-slate-100 object-cover">
+                            <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <i class="fa-solid fa-camera text-white text-2xl"></i>
+                            </div>
+                            <input type="file" id="pfp-upload-modal" class="hidden" accept="image/*" onchange="handlePfpChange(this)">
+                        </div>
+                    </div>
+                    <div class="text-center text-xs text-slate-400 mb-4">Click picture to change</div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Headline</label>
+                        <input id="edit-headline" type="text" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500" placeholder="Short description">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Bio</label>
+                        <textarea id="edit-bio" rows="4" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500" placeholder="Tell us about yourself..."></textarea>
+                    </div>
+                </div>
+                <div class="p-5 bg-slate-50 border-t border-slate-100 flex justify-end">
+                    <button onclick="saveProfileData()" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-xl hover:bg-blue-700 transition-colors">Save Profile</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="post-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] hidden flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-slide-up">
+                <div class="flex justify-between items-center p-4 border-b border-slate-100">
+                    <h3 class="font-heading font-bold text-lg text-slate-800 flex-grow text-center" id="modal-title">Create Post</h3>
+                    <button onclick="closePostModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center absolute right-4"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="p-4">
+                    <div class="flex gap-3 mb-4">
+                        <img id="modal-avatar" src="https://placehold.co/100x100?text=User" class="w-10 h-10 rounded-full">
+                        <div><h4 id="modal-name" class="font-bold text-slate-800 text-sm">Guest</h4><select id="post-type-select" class="text-xs bg-slate-100 border-none rounded-md px-2 py-1 outline-none mt-0.5 font-medium text-slate-600"><option value="regular">Public</option><option value="project">Project</option></select></div>
+                    </div>
+                    <textarea id="post-input" rows="4" class="w-full resize-none outline-none text-slate-700 placeholder-slate-400 text-lg" placeholder="What's on your mind?"></textarea>
+                    <div id="attachment-preview" class="hidden mt-2 relative group"><img id="preview-img" src="" class="max-h-48 rounded-lg border border-slate-200"><button onclick="clearAttachment()" class="absolute top-2 right-2 bg-black/50 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-black"><i class="fa-solid fa-xmark"></i></button></div>
+                    <div id="project-tags-input" class="hidden mt-3 pt-3 border-t border-dashed border-slate-200"><label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Looking For:</label><input type="text" id="tags-input-field" placeholder="e.g. Developer, Designer" class="w-full text-sm p-2.5 bg-slate-50 rounded-lg border border-slate-200 outline-none"></div>
+                </div>
+                <div class="p-4 m-4 mt-0 border border-slate-200 rounded-lg flex justify-between items-center">
+                    <span class="text-sm font-bold text-slate-700">Add to your post</span>
+                    <div class="flex gap-3 text-xl">
+                        <input type="file" id="file-input" class="hidden" accept="image/*" onchange="handleFileSelect(this)">
+                        <i class="fa-solid fa-image text-green-500 cursor-pointer hover:bg-slate-100 p-1 rounded" onclick="document.getElementById('file-input').click()"></i>
+                        <i class="fa-solid fa-tag text-blue-500 cursor-pointer hover:bg-slate-100 p-1 rounded"></i>
+                        <i class="fa-solid fa-face-smile text-yellow-500 cursor-pointer hover:bg-slate-100 p-1 rounded" onclick="toggleEmojiPicker()"></i>
+                    </div>
+                </div>
+                <div class="p-4 pt-0"><button id="post-submit-btn" onclick="submitPost()" class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 transition-colors">Post</button></div>
+                <div id="emoji-picker" class="hidden absolute bottom-20 right-8 bg-white border border-slate-200 shadow-xl rounded-lg p-2 grid grid-cols-5 gap-2 w-48 z-50">
+                    <span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('👍')">👍</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('🔥')">🔥</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('🚀')">🚀</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('💻')">💻</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('🎉')">🎉</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('❤️')">❤️</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('😂')">😂</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('✨')">✨</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="delete-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80] hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+            <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl transform scale-95 transition-all duration-300 p-6 text-center">
+                <div class="w-16 h-16 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto mb-4"><i class="fa-regular fa-trash-can text-2xl"></i></div>
+                <h3 class="font-heading font-bold text-xl text-slate-800 mb-2">Delete Post?</h3>
+                <p class="text-slate-500 text-sm mb-6 leading-relaxed">Are you sure you want to remove this post permanently?</p>
+                <div class="flex gap-3 justify-center">
+                    <button onclick="closeDeleteModal()" class="flex-1 px-5 py-3 rounded-xl text-slate-600 font-bold text-sm hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all">Cancel</button>
+                    <button onclick="confirmDelete()" class="flex-1 px-5 py-3 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 shadow-lg">Yes, Delete</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="toast">Action Successful</div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, sendPasswordResetEmail, updateProfile, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, updateDoc, increment, setDoc, getDoc, getDocs, arrayUnion, arrayRemove, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+        const luminiConfig = {
+          apiKey: "AIzaSyDtV1VuCnNCDeuHwGX4ZUCG0WMJM82-hBY",
+          authDomain: "luminix-bcc28.firebaseapp.com",
+          databaseURL: "https://luminix-bcc28-default-rtdb.asia-southeast1.firebasedatabase.app",
+          projectId: "luminix-bcc28",
+          storageBucket: "luminix-bcc28.firebasestorage.app",
+          messagingSenderId: "217255412785",
+          appId: "1:217255412785:web:dccb64a43aa83c6b234110",
+          measurementId: "G-TKJELBK1F5"
+        };
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'lumini-social';
+        const app = initializeApp(luminiConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Global variables for HTML access
+        window.currentUser = null;
+        let currentUser = null; // Local reference
+        
+        let currentChatId = null;
+        let unsubscribePosts = null;
+        let unsubscribeUsers = null;
+        let unsubscribeChat = null;
+        let unsubscribeNotifications = null;
+        let unsubscribeChatList = null;
+        let allPostsCache = []; 
+        let allUsersCache = [];
+        let allNotifications = [];
+        let allChatsCache = [];
+        let currentAttachment = null; 
+        let editModeId = null; 
+        let postToDeleteId = null;
+        let mySavedPosts = []; 
+
+        const defaultAvatar = 'https://placehold.co/200x200?text=User';
+
+        const initAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                try { await signInWithCustomToken(auth, __initial_auth_token); } 
+                catch (e) { console.log("No custom token."); }
+            }
+        };
+        initAuth();
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                window.currentUser = user; // Expose to window for HTML events
+                document.getElementById('auth-overlay').classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => document.getElementById('auth-overlay').classList.add('hidden'), 500);
+                
+                try {
+                    const userRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'main');
+                    const userSnap = await getDoc(userRef);
+                    let photoURL = user.photoURL || defaultAvatar;
+
+                    if (!userSnap.exists()) {
+                        const baseData = {
+                            name: user.displayName || user.email?.split('@')[0] || "Member",
+                            email: user.email || "Anonymous",
+                            photoURL: photoURL,
+                            headline: "New Member",
+                            bio: "",
+                            uid: user.uid,
+                            createdAt: serverTimestamp(),
+                            followers: [],
+                            savedPosts: []
+                        };
+                        await setDoc(userRef, baseData);
+                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', user.uid), baseData);
+                    }
+                    
+                    onSnapshot(userRef, (doc) => {
+                        if(doc.exists()) {
+                            const d = doc.data();
+                            mySavedPosts = d.savedPosts || [];
+                            updateUI(d);
+                            if(allPostsCache.length) renderFeed(allPostsCache);
+                            if(!document.getElementById('view-saved').classList.contains('hidden')) renderSavedPosts();
+                        }
+                    });
+
+                    // Start Listeners
+                    monitorNotifications();
+                    monitorChats();
+
+                } catch (e) { console.error(e); }
+                loadData();
+            } else {
+                currentUser = null;
+                window.currentUser = null;
+                document.getElementById('auth-overlay').classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+            }
+        });
+
+        // --- NEW: Notification System ---
+        function monitorNotifications() {
+             if(unsubscribeNotifications) unsubscribeNotifications();
+             const q = query(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'notifications'), orderBy('createdAt', 'desc'));
+             unsubscribeNotifications = onSnapshot(q, (snap) => {
+                 allNotifications = [];
+                 let unreadCount = 0;
+                 snap.forEach(d => {
+                     const n = {id: d.id, ...d.data()};
+                     allNotifications.push(n);
+                     if(!n.read) unreadCount++;
+                 });
+                 
+                 const badge = document.getElementById('notification-badge');
+                 if(unreadCount > 0) {
+                     badge.style.display = 'block';
+                 } else {
+                     badge.style.display = 'none';
+                 }
+                 renderNotificationsList();
+             });
+        }
+
+        function renderNotificationsList() {
+            const list = document.getElementById('notification-list');
+            if(allNotifications.length === 0) {
+                list.innerHTML = `<p class="text-center text-xs text-slate-400 py-4">No new notifications.</p>`;
+                return;
+            }
+            list.innerHTML = allNotifications.map(n => `
+                <div onclick="handleNotificationClick('${n.id}', '${n.fromUid}')" class="flex items-center gap-3 p-3 hover:bg-slate-50 cursor-pointer rounded-lg transition-colors ${!n.read ? 'bg-blue-50/50' : ''}">
+                    <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 text-xs font-bold">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-700"><span class="font-bold">${n.fromName}</span> followed you.</p>
+                        <p class="text-[10px] text-slate-400">Just now</p>
+                    </div>
+                    ${!n.read ? '<div class="w-2 h-2 bg-blue-500 rounded-full ml-auto"></div>' : ''}
+                </div>
+            `).join('');
+        }
+
+        window.toggleNotificationDropdown = () => {
+             const d = document.getElementById('notification-dropdown');
+             d.classList.toggle('hidden');
+             // Mark all as read when opened? Optional. Let's do individual mark on click.
+        };
+
+        window.handleNotificationClick = async (notifId, fromUid) => {
+            // Mark as read
+            try {
+                await updateDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'notifications', notifId), { read: true });
+            } catch(e) {}
+            document.getElementById('notification-dropdown').classList.add('hidden');
+            viewProfile(fromUid);
+        };
+
+        // --- NEW: Chat Monitoring ---
+        function monitorChats() {
+            // Need a way to know which chats I am part of. 
+            // Current structure is chats/{chatId}. ID is composite.
+            // We can query all chats where ID contains uid? No, too expensive.
+            // Better: We list the users we have chatted with.
+            // For this simpler demo, we will check the 'users_directory' or rely on local 'chats' list if we had one.
+            // FIX: We will maintain a list of active chats in user profile or use composite keys.
+            // Let's rely on iterating all users for the list, and checking specific composite keys.
+            // Optimized approach for this specific codebase:
+            // We will listen to specific chat paths for the users in our directory.
+            // Actually, let's just create a `chats` collection where `participants` array contains currentUser.uid
+            
+            // To make "Messenger Icon Light Up" work without changing DB schema too much:
+            // We will assume standard chat IDs: uid1_uid2 (sorted).
+            // We can't query collections easily by ID pattern.
+            // We will add a 'participants' array to the chat document when created.
+            
+            if(unsubscribeChatList) unsubscribeChatList();
+            const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'chats'), orderBy('lastUpdated', 'desc'));
+            
+            unsubscribeChatList = onSnapshot(q, (snap) => {
+                 let hasUnread = false;
+                 allChatsCache = [];
+                 
+                 snap.forEach(d => {
+                     const data = d.data();
+                     if(d.id.includes(currentUser.uid)) {
+                         // Check if unread
+                         const isUnread = data.readBy && !data.readBy.includes(currentUser.uid);
+                         if(isUnread) hasUnread = true;
+                         allChatsCache.push({id: d.id, ...data, isUnread});
+                     }
+                 });
+                 
+                 const badge = document.getElementById('chat-badge');
+                 badge.style.display = hasUnread ? 'block' : 'none';
+                 renderChatList(allUsersCache); // Re-render list to show bold/dots
+            });
+        }
+
+
+        window.handleEmailAuth = async () => {
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-password').value;
+            try { await signInWithEmailAndPassword(auth, email, pass); } 
+            catch (err) { try { await createUserWithEmailAndPassword(auth, email, pass); } catch (e) { document.getElementById('auth-error').innerText = e.message; document.getElementById('auth-error').classList.remove('hidden'); } }
+        };
+        window.handleGoogleAuth = async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (e) { console.error(e); } };
+        window.handleSignOut = () => signOut(auth);
+
+        function updateUI(data) {
+            const pic = data.photoURL || defaultAvatar;
+            document.getElementById('nav-avatar').src = pic;
+            document.getElementById('sidebar-mini-avatar').src = pic;
+            document.getElementById('menu-avatar-small').src = pic;
+            document.getElementById('composer-avatar').src = pic;
+            document.getElementById('modal-avatar').src = pic;
+            document.getElementById('sidebar-mini-name').innerText = data.name || "User";
+            document.getElementById('menu-name').innerText = data.name || "User";
+            document.getElementById('composer-name-placeholder').innerText = (data.name || "User").split(' ')[0];
+            
+            // Sync inputs with data
+            document.getElementById('settings-username').value = data.name || "";
+            document.getElementById('edit-headline').value = data.headline || "";
+            document.getElementById('edit-bio').value = data.bio || "";
+            document.getElementById('edit-modal-avatar').src = pic;
+        }
+
+        function createPostHTML(post, context) {
+            const isProject = post.type === 'project';
+            const tags = post.tags ? post.tags.map(t => `<span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md">#${t}</span>`).join('') : '';
+            const hasLiked = post.likedBy && post.likedBy.includes(currentUser.uid);
+            const isSaved = mySavedPosts.includes(post.id);
+            
+            const likeIconClass = hasLiked ? "fa-solid text-blue-600" : "fa-regular";
+            const likeTextClass = hasLiked ? "text-blue-600 font-bold" : "text-slate-500";
+            const saveIconClass = isSaved ? "fa-solid text-purple-600" : "fa-regular"; 
+            
+            const attachmentHtml = post.attachment ? `<div class="mt-3 mb-3"><img src="${post.attachment}" class="rounded-lg max-h-[400px] w-full object-cover border border-slate-200"></div>` : '';
+            
+            const isAuthor = currentUser && post.uid === currentUser.uid;
+            const menuItems = isAuthor 
+                ? `<button onclick="editPost('${post.id}')" class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md"><i class="fa-solid fa-pen mr-2"></i>Edit</button>
+                   <button onclick="deletePost('${post.id}')" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md"><i class="fa-solid fa-trash mr-2"></i>Delete</button>`
+                : `<button onclick="reportPost('${post.id}')" class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md"><i class="fa-solid fa-flag mr-2"></i>Report</button>`;
+
+            return `
+            <div class="glass-card rounded-xl p-4 animate-fade-in mb-4 bg-white" id="post-${post.id}-${context}">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex gap-3">
+                        <img onclick="viewProfile('${post.uid}')" src="${post.authorPhoto}" class="w-10 h-10 rounded-full object-cover shadow-sm cursor-pointer" onerror="this.src='${defaultAvatar}'">
+                        <div>
+                            <h4 onclick="viewProfile('${post.uid}')" class="font-bold text-slate-800 text-sm flex items-center gap-2 cursor-pointer hover:underline">
+                                ${post.author}
+                                ${isProject ? '<span class="text-blue-600 text-[10px] border border-blue-200 px-1.5 rounded font-bold uppercase">Project</span>' : ''}
+                            </h4>
+                            <p class="text-xs text-slate-400">Just now</p>
+                        </div>
+                    </div>
+                    <div class="relative group">
+                        <button onclick="toggleMenu('${post.id}', '${context}')" class="text-slate-400 hover:bg-slate-100 w-8 h-8 rounded-full transition-colors"><i class="fa-solid fa-ellipsis"></i></button>
+                        <div id="menu-${post.id}-${context}" class="hidden absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-xl border border-slate-100 z-20 p-1">
+                            ${menuItems}
+                        </div>
+                    </div>
+                </div>
+                <div class="text-slate-800 text-[15px] leading-relaxed mb-3 whitespace-pre-line">${post.text}</div>
+                ${attachmentHtml}
+                ${isProject ? `<div class="flex flex-wrap gap-2 mb-4">${tags}</div>` : ''}
+                <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-slate-500 text-sm font-semibold">
+                    <button onclick="toggleLike('${post.id}')" class="flex-1 py-2 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 ${likeTextClass}">
+                        <i class="${likeIconClass} fa-thumbs-up text-lg"></i> <span>${post.likes || 0}</span>
+                    </button>
+                    <button onclick="toggleComments('${post.id}', '${context}')" class="flex-1 py-2 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+                        <i class="fa-regular fa-comment text-lg"></i>
+                    </button>
+                    <button onclick="toggleSavePost('${post.id}')" class="flex-1 py-2 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2" title="Save">
+                        <i class="${saveIconClass} fa-bookmark text-lg"></i>
+                    </button>
+                    <button onclick="sharePost('${post.id}')" class="flex-1 py-2 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-share text-lg"></i>
+                    </button>
+                </div>
+                <div id="comments-${post.id}-${context}" class="hidden mt-3 pt-3 border-t border-slate-100">
+                    <div id="comments-list-${post.id}-${context}" class="space-y-2 mb-3 max-h-40 overflow-y-auto custom-scrollbar"></div>
+                    <div class="flex gap-2 items-center">
+                         <img src="${document.getElementById('nav-avatar').src}" class="w-8 h-8 rounded-full">
+                        <div class="flex-grow bg-slate-100 rounded-full px-3 py-1.5 flex items-center">
+                            <input type="text" id="comment-input-${post.id}-${context}" placeholder="Write a comment..." class="bg-transparent w-full text-sm outline-none" onkeydown="if(event.key==='Enter') submitComment('${post.id}', '${context}')">
+                            <button onclick="submitComment('${post.id}', '${context}')" class="text-blue-600 ml-2"><i class="fa-solid fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function loadData() {
+            if (!currentUser) return;
+            if (unsubscribePosts) unsubscribePosts(); 
+            const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'posts'));
+            unsubscribePosts = onSnapshot(q, (snap) => {
+                const posts = [];
+                snap.forEach(d => posts.push({id: d.id, ...d.data()}));
+                posts.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                allPostsCache = posts;
+                renderFeed(posts); 
+                if (window.currentProfileUid && !document.getElementById('view-profile').classList.contains('hidden')) {
+                    refreshProfilePosts(window.currentProfileUid);
+                }
+                if (!document.getElementById('view-saved').classList.contains('hidden')) renderSavedPosts();
+            });
+            loadNetwork();
+        }
+
+        async function loadNetwork() {
+            if(unsubscribeUsers) unsubscribeUsers();
+            const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'users_directory'));
+            unsubscribeUsers = onSnapshot(q, (snap) => {
+                const users = [];
+                snap.forEach(d => { 
+                    if(d.id !== currentUser.uid) {
+                        const data = d.data();
+                        if ((data.name||"").toLowerCase() !== 'member') users.push({id: d.id, ...data});
+                    }
+                });
+                allUsersCache = users;
+                renderNetwork(users);
+                renderChatList(users);
+            });
+        }
+
+        // --- SEARCH FEATURE ---
+        window.handleSearch = (query) => {
+            const dropdown = document.getElementById('search-dropdown');
+            if (!query.trim()) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+            const q = query.toLowerCase();
+
+            // Filter Users
+            const matchedUsers = allUsersCache.filter(u => 
+                (u.name || "").toLowerCase().includes(q)
+            ).slice(0, 5); // Limit to 5
+
+            // Filter Posts
+            const matchedPosts = allPostsCache.filter(p => 
+                (p.text || "").toLowerCase().includes(q)
+            ).slice(0, 5);
+
+            if (matchedUsers.length === 0 && matchedPosts.length === 0) {
+                 dropdown.innerHTML = '<div class="p-3 text-sm text-slate-500 text-center">No results found.</div>';
+                 dropdown.classList.remove('hidden');
+                 return;
+            }
+
+            let html = '';
+
+            // Users Section
+            if (matchedUsers.length > 0) {
+                html += '<div class="px-3 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">People</div>';
+                matchedUsers.forEach(u => {
+                    html += `
+                        <div onclick="viewProfile('${u.id}'); document.getElementById('search-dropdown').classList.add('hidden')" class="flex items-center gap-3 p-2 hover:bg-slate-50 cursor-pointer rounded-lg transition-colors">
+                            <img src="${u.photoURL || defaultAvatar}" class="w-8 h-8 rounded-full object-cover">
+                            <div class="text-sm font-bold text-slate-700">${u.name}</div>
+                        </div>
+                    `;
+                });
+            }
+
+            // Posts Section
+            if (matchedPosts.length > 0) {
+                 if (matchedUsers.length > 0) html += '<div class="border-t border-slate-100 my-1"></div>';
+                 html += '<div class="px-3 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Posts</div>';
+                 matchedPosts.forEach(p => {
+                     html += `
+                        <div onclick="router('feed'); renderFeed(allPostsCache.filter(x => x.id === '${p.id}')); document.getElementById('search-dropdown').classList.add('hidden')" class="flex items-center gap-3 p-2 hover:bg-slate-50 cursor-pointer rounded-lg transition-colors">
+                            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 flex-shrink-0"><i class="fa-regular fa-message"></i></div>
+                            <div class="truncate text-sm text-slate-600 font-medium">${p.text}</div>
+                        </div>
+                     `;
+                 });
+            }
+
+            dropdown.innerHTML = html;
+            dropdown.classList.remove('hidden');
+        };
+
+        // Helper for HTML OnClick
+        window.viewMyProfile = () => {
+             if(currentUser) viewProfile(currentUser.uid);
+             else showToast("Please wait, loading...");
+        };
+
+        window.viewProfile = async (uid) => {
+            if(!uid) return;
+            window.currentProfileUid = uid;
+            
+            // 1. Find User Data (Check cache first, then Firestore)
+            let user = allUsersCache.find(u => u.id === uid);
+            
+            // If viewing self or user not in cache, fetch fresh
+            if (!user || uid === currentUser.uid) {
+                try {
+                    // Try main profile doc
+                    let userDoc = await getDoc(doc(db, 'artifacts', appId, 'users', uid, 'profile', 'main'));
+                    if (userDoc.exists()) {
+                        user = { id: uid, ...userDoc.data() };
+                    } else {
+                        // Fallback to directory
+                        userDoc = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', uid));
+                        if(userDoc.exists()) user = { id: uid, ...userDoc.data() };
+                    }
+                } catch(e) { console.log("Error fetching user", e); }
+            }
+            
+            // 2. Switch View (Do this even if user object incomplete to show skeleton)
+            router('profile');
+
+            if (!user) {
+                // Fallback display if fetch fails
+                user = { name: "Unknown User", headline: "Profile not found", bio: "", photoURL: defaultAvatar };
+            }
+
+            // 3. Populate UI Elements
+            document.getElementById('profile-page-name').innerText = user.name || "User";
+            document.getElementById('profile-page-headline').innerText = user.headline || 'Member';
+            
+            // Handle Bio (Short and Long)
+            const bioText = user.bio || "No bio available.";
+            document.getElementById('profile-page-bio').innerText = bioText;
+            document.getElementById('profile-full-bio').innerText = bioText;
+            
+            document.getElementById('profile-page-avatar').src = user.photoURL || defaultAvatar;
+            
+            const joinDate = user.createdAt ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : "Unknown";
+            document.getElementById('profile-join-date').innerText = joinDate;
+
+            // 4. Handle Buttons (Edit vs Follow)
+            const editBtn = document.getElementById('edit-profile-btn');
+            const followBtn = document.getElementById('follow-btn');
+            const chatBtn = document.getElementById('profile-chat-btn');
+            const savedTab = document.getElementById('tab-saved');
+
+            if (uid === currentUser.uid) {
+                // Viewing Own Profile
+                editBtn.classList.remove('hidden');
+                editBtn.classList.add('flex'); 
+                
+                savedTab.classList.remove('hidden');
+                
+                followBtn.classList.add('hidden');
+                followBtn.classList.remove('flex');
+                
+                chatBtn.classList.add('hidden');
+                chatBtn.classList.remove('flex');
+                
+                // Pre-fill Edit Modal Inputs
+                document.getElementById('edit-headline').value = user.headline || "";
+                document.getElementById('edit-bio').value = user.bio || "";
+            } else {
+                // Viewing Others
+                editBtn.classList.add('hidden');
+                editBtn.classList.remove('flex');
+                
+                savedTab.classList.add('hidden');
+                
+                followBtn.classList.remove('hidden');
+                followBtn.classList.add('flex');
+                
+                chatBtn.classList.remove('hidden');
+                chatBtn.classList.add('flex');
+                
+                chatBtn.onclick = () => initChat(uid, user.name, user.photoURL);
+                
+                // Check if I am already following them
+                const amIFollowing = user.followers && user.followers.includes(currentUser.uid);
+                updateFollowButton(followBtn, amIFollowing, uid);
+            }
+            
+            // 5. Load Content
+            switchProfileTab('posts'); 
+            refreshProfilePosts(uid);
+        };
+
+        window.switchProfileTab = (tab) => {
+            document.querySelectorAll('.profile-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            
+            document.getElementById('profile-content-posts').classList.add('hidden');
+            document.getElementById('profile-content-about').classList.add('hidden');
+            document.getElementById('profile-content-saved').classList.add('hidden');
+            
+            document.getElementById(`profile-content-${tab}`).classList.remove('hidden');
+            if(tab === 'saved') renderSavedPostsInProfile();
+        };
+
+        function refreshProfilePosts(uid) {
+            // Filter the global cache for posts where uid matches the profile being viewed
+            const userPosts = allPostsCache.filter(p => p.uid === uid);
+            const container = document.getElementById('profile-content-posts');
+            
+            if (userPosts.length === 0) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                        <i class="fa-solid fa-camera text-3xl text-slate-300 mb-3"></i>
+                        <p class="text-slate-500 font-medium">No posts yet.</p>
+                    </div>`;
+            } else {
+                // Use the existing createPostHTML helper, passing 'profile' as context
+                container.innerHTML = userPosts.map(post => createPostHTML(post, 'profile')).join('');
+            }
+        }
+        
+        function renderSavedPostsInProfile() {
+             const container = document.getElementById('profile-content-saved');
+             const saved = allPostsCache.filter(p => mySavedPosts.includes(p.id));
+             if (saved.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 text-slate-400 bg-slate-50 rounded-xl">No saved posts.</div>`;
+            } else {
+                container.innerHTML = saved.map(post => createPostHTML(post, 'profile-saved')).join('');
+            }
+        }
+
+        // --- MODALS (Settings & Profile) ---
+        window.openSettingsModal = () => {
+            document.getElementById('settings-modal').classList.remove('hidden');
+            document.getElementById('settings-modal').classList.add('flex');
+            document.getElementById('settings-username').value = document.getElementById('menu-name').innerText;
+        };
+        window.closeSettingsModal = () => {
+            document.getElementById('settings-modal').classList.add('hidden');
+            document.getElementById('settings-modal').classList.remove('flex');
+        };
+
+        window.openEditProfileModal = () => {
+            document.getElementById('edit-profile-modal').classList.remove('hidden');
+            document.getElementById('edit-profile-modal').classList.add('flex');
+        };
+        window.closeEditProfileModal = () => {
+            document.getElementById('edit-profile-modal').classList.add('hidden');
+            document.getElementById('edit-profile-modal').classList.remove('flex');
+        };
+
+        window.handlePfpChange = (input) => {
+            const file = input.files[0];
+            if (!file) return;
+            
+            // Limit size to ~1MB
+            if (file.size > 1024 * 1024) { 
+                alert("Image too large. Max 1MB"); 
+                return; 
+            }
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const newPic = e.target.result;
+                
+                // 1. Update Preview in Modal
+                document.getElementById('edit-modal-avatar').src = newPic; 
+                
+                try {
+                    // 2. Save to Database
+                    await updateDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'main'), { photoURL: newPic });
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', currentUser.uid), { photoURL: newPic });
+                    
+                    // 3. Update All Images on Screen Immediately
+                    document.getElementById('profile-page-avatar').src = newPic;
+                    document.getElementById('nav-avatar').src = newPic;
+                    document.getElementById('sidebar-mini-avatar').src = newPic;
+                    document.getElementById('composer-avatar').src = newPic;
+                    
+                    showToast("Profile picture updated!");
+                } catch (err) {
+                    console.error(err);
+                    alert("Error updating picture");
+                }
+            };
+            reader.readAsDataURL(file);
+        };
+
+        window.saveSettings = async () => {
+            const newName = document.getElementById('settings-username').value.trim();
+            if(!newName) return alert("Username cannot be empty.");
+            
+            try {
+                await updateProfile(currentUser, { displayName: newName });
+                await updateDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'main'), { name: newName });
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', currentUser.uid), { name: newName });
+                showToast('Settings saved!');
+                closeSettingsModal();
+            } catch(e) { alert("Error saving settings: " + e.message); }
+        };
+
+        window.resetPassword = async () => {
+            if(!currentUser.email) return alert("No email found.");
+            try {
+                await sendPasswordResetEmail(auth, currentUser.email);
+                alert(`Password reset email sent to ${currentUser.email}`);
+            } catch(e) { alert("Error: " + e.message); }
+        };
+
+        window.saveProfileData = async () => {
+            const headline = document.getElementById('edit-headline').value;
+            const bio = document.getElementById('edit-bio').value;
+            
+            const updates = { headline, bio };
+
+            try {
+                // 1. Update Firestore
+                await updateDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'main'), updates);
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', currentUser.uid), updates);
+                
+                // 2. Update UI Immediately (Client-side)
+                document.getElementById('profile-page-headline').innerText = headline;
+                document.getElementById('profile-page-bio').innerText = bio;
+                document.getElementById('profile-full-bio').innerText = bio;
+                
+                closeEditProfileModal();
+                showToast('Profile info updated!');
+            } catch (e) {
+                console.error("Error saving profile:", e);
+                alert("Failed to save profile.");
+            }
+        };
+
+        window.toggleSavePost = async (postId) => {
+            if (!currentUser) return;
+            const userRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'main');
+            try {
+                if (mySavedPosts.includes(postId)) {
+                    await updateDoc(userRef, { savedPosts: arrayRemove(postId) });
+                    showToast("Removed from Saved");
+                } else {
+                    await updateDoc(userRef, { savedPosts: arrayUnion(postId) });
+                    showToast("Post Saved");
+                }
+            } catch (e) { console.error(e); }
+        };
+
+        function renderSavedPosts() {
+            const container = document.getElementById('saved-posts-stream');
+            const saved = allPostsCache.filter(p => mySavedPosts.includes(p.id));
+            if (saved.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 text-slate-400 bg-white rounded-2xl border border-slate-100">No saved posts yet.</div>`;
+            } else {
+                container.innerHTML = saved.map(post => createPostHTML(post, 'saved')).join('');
+            }
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById("toast");
+            t.innerText = msg; t.classList.add("show");
+            setTimeout(() => t.classList.remove("show"), 2000);
+        }
+
+        function updateFollowButton(btn, isFollowing, targetUid) {
+            btn.onclick = () => toggleFollow(targetUid, btn);
+            if (isFollowing) {
+                btn.innerHTML = `<i class="fa-solid fa-check"></i> Following`;
+                btn.className = "bg-slate-200 text-slate-700 px-6 py-2 rounded-lg font-bold text-sm hover:bg-slate-300 transition-all flex items-center gap-2";
+            } else {
+                btn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Follow`;
+                btn.className = "bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 transition-all shadow-md flex items-center gap-2";
+            }
+        }
+
+        window.toggleFollow = async (targetUid, btn) => {
+            if (!currentUser) return;
+            const targetRef = doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', targetUid);
+            const isFollowing = btn.innerText.includes("Following");
+            
+            try {
+                if(!isFollowing) {
+                    // Start Following
+                    await updateDoc(targetRef, { followers: arrayUnion(currentUser.uid) });
+                    // Add Notification to Target
+                    await addDoc(collection(db, 'artifacts', appId, 'users', targetUid, 'notifications'), {
+                        type: 'follow',
+                        fromUid: currentUser.uid,
+                        fromName: document.getElementById('menu-name').innerText,
+                        read: false,
+                        createdAt: serverTimestamp()
+                    });
+                    showToast("Followed user");
+                } else {
+                    // Unfollow
+                    await updateDoc(targetRef, { followers: arrayRemove(currentUser.uid) });
+                    showToast("Unfollowed user");
+                }
+                updateFollowButton(btn, !isFollowing, targetUid);
+            } catch (e) { console.error(e); }
+        };
+
+        function renderFeed(posts) {
+            const container = document.getElementById('feed-stream');
+            if(posts.length === 0) { container.innerHTML = `<div class="text-center py-10 text-slate-400 bg-white rounded-2xl border border-slate-100">No posts found.</div>`; return; }
+            container.innerHTML = posts.map(post => createPostHTML(post, 'feed')).join('');
+        }
+
+        function renderNetwork(users) {
+             const g = document.getElementById('network-grid');
+             if(!users.length) { g.innerHTML = `<p class="col-span-2 text-center text-slate-400">No users found.</p>`; return; }
+             g.innerHTML = users.map(u => `<div class="glass-card rounded-xl p-4 flex items-center gap-4 hover:border-blue-300 transition-colors"><img onclick="viewProfile('${u.id}')" src="${u.photoURL}" class="w-12 h-12 rounded-full bg-slate-100 object-cover cursor-pointer"><div class="flex-grow"><h4 onclick="viewProfile('${u.id}')" class="font-bold text-sm cursor-pointer hover:text-blue-600">${u.name}</h4><p class="text-xs text-slate-400">${u.headline||'Member'}</p></div><button onclick="initChat('${u.id}', '${u.name}', '${u.photoURL}')" class="text-blue-600 hover:bg-blue-50 p-2 rounded-full"><i class="fa-regular fa-comment-dots"></i></button></div>`).join('');
+        }
+        
+        function renderChatList(users) {
+             // Now we check allChatsCache to see if unread
+             document.getElementById('chat-list').innerHTML = users.map(u => {
+                 const chatId = [currentUser.uid, u.id].sort().join('_');
+                 const chatData = allChatsCache.find(c => c.id === chatId);
+                 const isUnread = chatData ? chatData.isUnread : false;
+                 
+                 return `<div onclick="initChat('${u.id}', '${u.name}', '${u.photoURL}')" class="flex items-center gap-3 p-3 hover:bg-white rounded-xl cursor-pointer ${isUnread ? 'bg-blue-50' : ''}">
+                    <div class="relative">
+                        <img src="${u.photoURL}" class="w-10 h-10 rounded-full bg-slate-200 object-cover">
+                        ${isUnread ? '<div class="absolute top-0 right-0 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></div>' : ''}
+                    </div>
+                    <div class="truncate flex-grow">
+                        <h4 class="font-bold text-sm text-slate-800 ${isUnread ? 'text-black' : ''}">${u.name}</h4>
+                        ${isUnread ? '<p class="text-[10px] text-blue-600 font-bold">New message</p>' : ''}
+                    </div>
+                 </div>`;
+             }).join('');
+        }
+
+        window.toggleMenu = (postId, context) => {
+            const menu = document.getElementById(`menu-${postId}-${context}`);
+            document.querySelectorAll(`[id^="menu-"][id$="-${context}"]`).forEach(el => { if(el.id !== `menu-${postId}-${context}`) el.classList.add('hidden') });
+            menu.classList.toggle('hidden');
+        };
+        window.deletePost = (postId) => {
+            postToDeleteId = postId;
+            document.getElementById('delete-modal').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('delete-modal').classList.remove('opacity-0');
+                document.getElementById('delete-modal').querySelector('div').classList.remove('scale-95');
+                document.getElementById('delete-modal').querySelector('div').classList.add('scale-100');
+            }, 10);
+        };
+        window.closeDeleteModal = () => {
+            const m = document.getElementById('delete-modal');
+            m.classList.add('opacity-0'); m.querySelector('div').classList.remove('scale-100'); m.querySelector('div').classList.add('scale-95');
+            setTimeout(() => { m.classList.add('hidden'); postToDeleteId = null; }, 300);
+        };
+        window.confirmDelete = async () => {
+            if (!postToDeleteId) return;
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', postToDeleteId));
+                showToast("Post Deleted");
+                closeDeleteModal();
+            } catch (e) { alert(e.message); closeDeleteModal(); }
+        };
+
+        window.toggleLike = async (postId) => {
+            const postRef = doc(db, 'artifacts', appId, 'public', 'data', 'posts', postId);
+            const post = allPostsCache.find(p => p.id === postId);
+            if(!post) return;
+            const liked = post.likedBy && post.likedBy.includes(currentUser.uid);
+            try { await updateDoc(postRef, { likes: increment(liked ? -1 : 1), likedBy: liked ? arrayRemove(currentUser.uid) : arrayUnion(currentUser.uid) }); } catch(e) { console.error(e); }
+        };
+
+        window.toggleComments = (postId, context) => {
+            const section = document.getElementById(`comments-${postId}-${context}`);
+            section.classList.toggle('hidden');
+            if(!section.classList.contains('hidden')) {
+                const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'posts', postId, 'comments'), orderBy('createdAt', 'asc'));
+                onSnapshot(q, (snap) => {
+                    const list = document.getElementById(`comments-list-${postId}-${context}`);
+                    if(list) {
+                        list.innerHTML = '';
+                        snap.forEach(d => {
+                            const c = d.data();
+                            list.innerHTML += `<div class="flex gap-2 text-sm mb-1"><span class="font-bold text-slate-800 text-xs">${c.author}:</span><span class="text-slate-600 text-xs">${c.text}</span></div>`;
+                        });
+                    }
+                });
+            }
+        };
+
+        window.submitComment = async (postId, context) => {
+            const input = document.getElementById(`comment-input-${postId}-${context}`);
+            if(!input.value.trim()) return;
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'posts', postId, 'comments'), {
+                    text: input.value, author: document.getElementById('menu-name').innerText, uid: currentUser.uid, createdAt: serverTimestamp()
+                });
+                input.value = '';
+            } catch(e) { console.error(e); }
+        };
+
+        window.editPost = (postId) => {
+            const post = allPostsCache.find(p => p.id === postId);
+            if (!post) return;
+            editModeId = postId; 
+            document.getElementById('post-input').value = post.text || "";
+            document.getElementById('post-type-select').value = post.type || "regular";
+            if(post.tags) document.getElementById('tags-input-field').value = post.tags.join(', ');
+            document.getElementById('modal-title').innerText = "Edit Post";
+            document.getElementById('post-submit-btn').innerText = "Save Changes";
+            openPostModal(post.type);
+        };
+
+        window.openPostModal = (type='regular') => {
+             const modal = document.getElementById('post-modal');
+             document.getElementById('post-type-select').value = type;
+             const tags = document.getElementById('project-tags-input');
+             if (editModeId === null) { document.getElementById('modal-title').innerText = "Create Post"; document.getElementById('post-submit-btn').innerText = "Post"; }
+             tags.classList.toggle('hidden', type !== 'project');
+             modal.classList.remove('hidden'); modal.classList.add('flex');
+        };
+        window.closePostModal = () => {
+            document.getElementById('post-modal').classList.add('hidden');
+            document.getElementById('post-input').value = '';
+            editModeId = null; 
+            currentAttachment = null;
+            document.getElementById('attachment-preview').classList.add('hidden');
+        };
+        window.handleFileSelect = (input) => {
+            const file = input.files[0];
+            if (file && file.size < 500*1024) {
+                const r = new FileReader();
+                r.onload = (e) => { currentAttachment = e.target.result; document.getElementById('preview-img').src = e.target.result; document.getElementById('attachment-preview').classList.remove('hidden'); };
+                r.readAsDataURL(file);
+            } else { alert("File too large (max 500KB)"); }
+        };
+        window.clearAttachment = () => { currentAttachment = null; document.getElementById('attachment-preview').classList.add('hidden'); document.getElementById('file-input').value = ''; };
+        window.toggleEmojiPicker = () => document.getElementById('emoji-picker').classList.toggle('hidden');
+        window.insertEmoji = (e) => { document.getElementById('post-input').value += e; document.getElementById('emoji-picker').classList.add('hidden'); };
+        
+        window.submitPost = async () => {
+            const text = document.getElementById('post-input').value;
+            if(!text.trim() && !currentAttachment) return;
+            const type = document.getElementById('post-type-select').value;
+            const tags = document.getElementById('tags-input-field').value.split(',').map(t=>t.trim()).filter(t=>t);
+            const data = { uid: currentUser.uid, author: document.getElementById('menu-name').innerText, authorPhoto: document.getElementById('nav-avatar').src, text, type, tags, likes:0, likedBy:[], createdAt: serverTimestamp(), attachment: currentAttachment };
+            try {
+                if (editModeId) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', editModeId), {text, type, tags}); }
+                else { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'posts'), data); }
+                closePostModal();
+            } catch(e) { console.error(e); }
+        };
+
+        window.router = (view) => {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${view}`).classList.remove('hidden');
+            document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+            const activeLink = document.getElementById(`nav-link-${view.replace('view-','')}`);
+            if(activeLink) activeLink.classList.add('active');
+            if (view === 'saved') renderSavedPosts();
+            if(view !== 'profile') window.currentProfileUid = null;
+        };
+        window.toggleProfileMenu = () => document.getElementById('profile-menu').classList.toggle('hidden');
+        
+        window.initChat = async (uid, name, photo) => {
+            currentChatId = [currentUser.uid, uid].sort().join('_');
+            
+            // Mark as read immediately when opening
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'chats', currentChatId), {
+                    readBy: arrayUnion(currentUser.uid),
+                    lastUpdated: serverTimestamp() // just to ensure doc exists
+                }, { merge: true });
+            } catch(e) {}
+
+            document.getElementById('chat-header').innerHTML = `<div class="flex items-center justify-between w-full"><div class="flex items-center gap-3"><img src="${photo}" class="w-8 h-8 rounded-full"><span class="font-bold text-sm">${name}</span></div><button onclick="deleteChat()" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button></div>`;
+            document.getElementById('message-input').disabled = false; document.getElementById('message-send-btn').disabled = false;
+            
+            if(unsubscribeChat) unsubscribeChat();
+            const c = document.getElementById('chat-messages');
+            unsubscribeChat = onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'chats', currentChatId, 'messages'), orderBy('createdAt', 'asc')), (snap) => {
+                c.innerHTML = `<div class="text-center text-xs text-slate-300 mb-4 mt-2">Conversation started</div>`;
+                snap.forEach(d => {
+                    const m = d.data();
+                    const me = m.senderId === currentUser.uid;
+                    c.innerHTML += `<div class="flex w-full mb-2 ${me?'justify-end':'justify-start'}"><div class="msg-bubble ${me?'msg-me':'msg-them'} shadow-sm">${m.text}</div></div>`;
+                });
+                c.scrollTop = c.scrollHeight;
+            });
+            router('messaging');
+        };
+        window.deleteChat = async () => {
+            if(!confirm("Delete conversation?")) return;
+            const s = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'chats', currentChatId, 'messages'));
+            s.docs.forEach(d => deleteDoc(d.ref));
+        };
+        window.sendMessage = async (e) => {
+            e.preventDefault(); const i = document.getElementById('message-input'); if(!i.value.trim()) return;
+            
+            // Send Message
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'chats', currentChatId, 'messages'), { text: i.value, senderId: currentUser.uid, createdAt: serverTimestamp() });
+            
+            // Update Chat Metadata for Notifications
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'chats', currentChatId), {
+                lastUpdated: serverTimestamp(),
+                // Read by sender, NOT read by others yet. We overwrite the array to just [me]
+                readBy: [currentUser.uid]
+            }, { merge: true });
+
+            i.value = '';
+        };
+        
+        router('feed');
+    </script>
+</body>
+</html>
