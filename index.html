@@ -359,7 +359,7 @@
         </div>
 
         <div id="post-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] hidden flex items-center justify-center p-4">
-            <div class="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-slide-up">
+            <div class="relative bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-slide-up">
                 <div class="relative flex justify-between items-center p-4 border-b border-slate-100">
                     <h3 class="font-heading font-bold text-lg text-slate-800 flex-grow text-center" id="modal-title">Create Post</h3>
                     <button onclick="closePostModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center absolute right-4"><i class="fa-solid fa-xmark"></i></button>
@@ -378,13 +378,19 @@
                     <div class="flex gap-3 text-xl">
                         <input type="file" id="file-input" class="hidden" accept="image/*" onchange="handleFileSelect(this)">
                         <i class="fa-solid fa-image text-green-500 cursor-pointer hover:bg-slate-100 p-1 rounded" onclick="document.getElementById('file-input').click()"></i>
-                        <i class="fa-solid fa-tag text-blue-500 cursor-pointer hover:bg-slate-100 p-1 rounded"></i>
+                        <i class="fa-solid fa-tag text-blue-500 cursor-pointer hover:bg-slate-100 p-1 rounded" onclick="toggleTagPicker()"></i>
                         <i class="fa-solid fa-face-smile text-yellow-500 cursor-pointer hover:bg-slate-100 p-1 rounded" onclick="toggleEmojiPicker()"></i>
                     </div>
                 </div>
                 <div class="p-4 pt-0"><button id="post-submit-btn" onclick="submitPost()" class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 transition-colors">Post</button></div>
                 <div id="emoji-picker" class="hidden absolute bottom-20 right-8 bg-white border border-slate-200 shadow-xl rounded-lg p-2 grid grid-cols-5 gap-2 w-48 z-50">
                     <span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('👍')">👍</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('🔥')">🔥</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('🚀')">🚀</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('💻')">💻</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('🎉')">🎉</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('❤️')">❤️</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('😂')">😂</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('✨')">✨</span>
+                </div>
+                <div id="tag-picker" class="hidden absolute bottom-20 right-8 bg-white border border-slate-200 shadow-xl rounded-lg w-64 z-50 max-h-80 overflow-y-auto custom-scrollbar">
+                    <div class="p-3 border-b border-slate-100">
+                        <input type="text" id="tag-search" placeholder="Search people..." class="w-full text-sm p-2 bg-slate-50 rounded-lg border border-slate-200 outline-none focus:border-blue-500" oninput="filterTagList(this.value)">
+                    </div>
+                    <div id="tag-list" class="p-2"></div>
                 </div>
             </div>
         </div>
@@ -535,18 +541,37 @@
                 list.innerHTML = `<p class="text-center text-xs text-slate-400 py-4">No new notifications.</p>`;
                 return;
             }
-            list.innerHTML = allNotifications.map(n => `
-                <div onclick="handleNotificationClick('${n.id}', '${n.fromUid}')" class="flex items-center gap-3 p-3 hover:bg-slate-50 cursor-pointer rounded-lg transition-colors ${!n.read ? 'bg-blue-50/50' : ''}">
-                    <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 text-xs font-bold">
-                        <i class="fa-solid fa-user"></i>
+            list.innerHTML = allNotifications.map(n => {
+                let content = '';
+                let icon = 'fa-user';
+                let iconColor = 'text-blue-500';
+                
+                if (n.type === 'follow') {
+                    content = `<span class="font-bold">${n.fromName}</span> started following you.`;
+                    icon = 'fa-user-plus';
+                    iconColor = 'text-blue-500';
+                } else if (n.type === 'mention') {
+                    content = `<span class="font-bold">${n.fromName}</span> mentioned you in a post.`;
+                    icon = 'fa-at';
+                    iconColor = 'text-purple-500';
+                    if (n.text) {
+                        content += `<p class="text-xs text-slate-500 mt-1 line-clamp-2">"${n.text}"</p>`;
+                    }
+                }
+                
+                return `
+                <div onclick="handleNotificationClick('${n.id}', '${n.fromUid}', '${n.type}', '${n.postId || ''}')" class="flex items-start gap-3 p-3 hover:bg-slate-50 cursor-pointer rounded-lg transition-colors ${!n.read ? 'bg-blue-50/50' : ''}">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center flex-shrink-0">
+                        ${n.fromPhoto ? `<img src="${n.fromPhoto}" class="w-full h-full rounded-full object-cover">` : `<i class="fa-solid ${icon} ${iconColor} text-sm"></i>`}
                     </div>
-                    <div>
-                        <p class="text-sm text-slate-700"><span class="font-bold">${n.fromName}</span> followed you.</p>
-                        <p class="text-[10px] text-slate-400">Just now</p>
+                    <div class="flex-grow min-w-0">
+                        <p class="text-sm text-slate-700">${content}</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Just now</p>
                     </div>
-                    ${!n.read ? '<div class="w-2 h-2 bg-blue-500 rounded-full ml-auto"></div>' : ''}
+                    ${!n.read ? '<div class="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>' : ''}
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         window.toggleNotificationDropdown = () => {
@@ -555,13 +580,31 @@
              // Mark all as read when opened? Optional. Let's do individual mark on click.
         };
 
-        window.handleNotificationClick = async (notifId, fromUid) => {
+        window.handleNotificationClick = async (notifId, fromUid, type, postId) => {
             // Mark as read
             try {
                 await updateDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'notifications', notifId), { read: true });
             } catch(e) {}
             document.getElementById('notification-dropdown').classList.add('hidden');
-            viewProfile(fromUid);
+            
+            // Navigate based on notification type
+            if (type === 'mention' && postId) {
+                // Go to feed and scroll to the post
+                router('feed');
+                setTimeout(() => {
+                    const postElement = document.getElementById(`post-${postId}-feed`);
+                    if (postElement) {
+                        postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        postElement.classList.add('ring-2', 'ring-blue-400', 'ring-offset-2');
+                        setTimeout(() => {
+                            postElement.classList.remove('ring-2', 'ring-blue-400', 'ring-offset-2');
+                        }, 2000);
+                    }
+                }, 300);
+            } else if (type === 'follow') {
+                // Go to the user's profile
+                viewProfile(fromUid);
+            }
         };
 
         // --- NEW: Chat Monitoring ---
@@ -1271,7 +1314,10 @@
             document.getElementById('post-input').value = '';
             editModeId = null; 
             currentAttachment = null;
+            window.taggedUsers = []; // Clear tagged users
             document.getElementById('attachment-preview').classList.add('hidden');
+            document.getElementById('tag-picker').classList.add('hidden');
+            document.getElementById('emoji-picker').classList.add('hidden');
         };
         window.handleFileSelect = (input) => {
             const file = input.files[0];
@@ -1282,18 +1328,115 @@
             } else { alert("File too large (max 500KB)"); }
         };
         window.clearAttachment = () => { currentAttachment = null; document.getElementById('attachment-preview').classList.add('hidden'); document.getElementById('file-input').value = ''; };
-        window.toggleEmojiPicker = () => document.getElementById('emoji-picker').classList.toggle('hidden');
-        window.insertEmoji = (e) => { document.getElementById('post-input').value += e; document.getElementById('emoji-picker').classList.add('hidden'); };
+        window.toggleEmojiPicker = () => {
+                    document.getElementById('emoji-picker').classList.toggle('hidden');
+                    document.getElementById('tag-picker').classList.add('hidden');
+                };
+                window.toggleTagPicker = () => {
+                    const picker = document.getElementById('tag-picker');
+                    picker.classList.toggle('hidden');
+                    document.getElementById('emoji-picker').classList.add('hidden');
+                    if (!picker.classList.contains('hidden')) {
+                        renderTagList(allUsersCache);
+                    }
+                };
+                
+                function renderTagList(users) {
+                    const list = document.getElementById('tag-list');
+                    if (users.length === 0) {
+                        list.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">No users found</p>';
+                        return;
+                    }
+                    list.innerHTML = users.map(u => `
+                        <div onclick="insertTag('${u.name}', '${u.id}')" class="flex items-center gap-3 p-2 hover:bg-slate-50 cursor-pointer rounded-lg transition-colors">
+                            <img src="${u.photoURL || defaultAvatar}" class="w-8 h-8 rounded-full object-cover">
+                            <div>
+                                <p class="text-sm font-bold text-slate-800">${u.name}</p>
+                                <p class="text-xs text-slate-400">${u.headline || 'Member'}</p>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                window.filterTagList = (query) => {
+                    if (!query.trim()) {
+                        renderTagList(allUsersCache);
+                        return;
+                    }
+                    const filtered = allUsersCache.filter(u => 
+                        (u.name || "").toLowerCase().includes(query.toLowerCase())
+                    );
+                    renderTagList(filtered);
+                };
+                
+                window.insertTag = (name, uid) => {
+                    const input = document.getElementById('post-input');
+                    const currentText = input.value;
+                    input.value = currentText + (currentText ? ' ' : '') + `@${name} `;
+                    
+                    // Store tagged user for notification later
+                    if (!window.taggedUsers) window.taggedUsers = [];
+                    if (!window.taggedUsers.some(t => t.uid === uid)) {
+                        window.taggedUsers.push({ uid, name });
+                    }
+                    
+                    document.getElementById('tag-picker').classList.add('hidden');
+                    input.focus();
+                };
+                
+                window.insertEmoji = (e) => { 
+                    document.getElementById('post-input').value += e; 
+                    document.getElementById('emoji-picker').classList.add('hidden'); 
+                };
         
-        window.submitPost = async () => {
+window.submitPost = async () => {
             const text = document.getElementById('post-input').value;
             if(!text.trim() && !currentAttachment) return;
             const type = document.getElementById('post-type-select').value;
             const tags = document.getElementById('tags-input-field').value.split(',').map(t=>t.trim()).filter(t=>t);
-            const data = { uid: currentUser.uid, author: document.getElementById('menu-name').innerText, authorPhoto: document.getElementById('nav-avatar').src, text, type, tags, likes:0, likedBy:[], createdAt: serverTimestamp(), attachment: currentAttachment };
+            
+            // Extract mentioned users from text using @name pattern
+            const mentionedUsers = window.taggedUsers || [];
+            
+            const data = { 
+                uid: currentUser.uid, 
+                author: document.getElementById('menu-name').innerText, 
+                authorPhoto: document.getElementById('nav-avatar').src, 
+                text, 
+                type, 
+                tags, 
+                likes:0, 
+                likedBy:[], 
+                createdAt: serverTimestamp(), 
+                attachment: currentAttachment,
+                mentions: mentionedUsers.map(u => u.uid) // Store UIDs of mentioned users
+            };
+            
             try {
-                if (editModeId) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', editModeId), {text, type, tags}); }
-                else { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'posts'), data); }
+                if (editModeId) { 
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', editModeId), {text, type, tags}); 
+                } else { 
+                    const postRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'posts'), data);
+                    
+                    // Send notifications to tagged users
+                    for (const user of mentionedUsers) {
+                        try {
+                            await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'notifications'), {
+                                type: 'mention',
+                                postId: postRef.id,
+                                fromUid: currentUser.uid,
+                                fromName: document.getElementById('menu-name').innerText,
+                                fromPhoto: document.getElementById('nav-avatar').src,
+                                text: text.substring(0, 100) + (text.length > 100 ? '...' : ''), // Preview
+                                read: false,
+                                createdAt: serverTimestamp()
+                            });
+                        } catch(e) { console.error("Error sending notification:", e); }
+                    }
+                }
+                
+                // Reset tagged users
+                window.taggedUsers = [];
                 closePostModal();
             } catch(e) { console.error(e); }
         };
