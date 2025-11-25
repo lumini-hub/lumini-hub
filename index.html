@@ -408,6 +408,34 @@
         </div>
 
         <div id="toast">Action Successful</div>
+        <nav id="mobile-bottom-nav" class="md:hidden fixed bottom-0 left-0 w-full h-16 bg-white/95 backdrop-blur-xl border-t border-slate-200 z-50 flex justify-between items-center px-6 pb-safe transition-all duration-300">
+            <button onclick="router('feed')" id="mobile-nav-feed" class="mobile-nav-item flex flex-col items-center justify-center text-blue-600 gap-1 w-12 transition-colors">
+                <i class="fa-solid fa-house text-xl"></i>
+                <span class="text-[10px] font-medium">Home</span>
+            </button>
+            
+            <button onclick="router('network')" id="mobile-nav-network" class="mobile-nav-item flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 gap-1 w-12 transition-colors">
+                <i class="fa-solid fa-user-group text-xl"></i>
+                <span class="text-[10px] font-medium">Network</span>
+            </button>
+
+            <button onclick="openPostModal()" class="flex flex-col items-center justify-center -mt-8 group">
+                <div class="w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center text-white transform transition-transform group-active:scale-95 border-[4px] border-[#f0f2f5]">
+                    <i class="fa-solid fa-plus text-2xl"></i>
+                </div>
+            </button>
+
+            <button onclick="router('messaging')" id="mobile-nav-messaging" class="mobile-nav-item flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 gap-1 w-12 transition-colors relative">
+                <i class="fa-brands fa-facebook-messenger text-xl"></i>
+                <span class="text-[10px] font-medium">Chat</span>
+                <div id="mobile-chat-badge" class="absolute top-0 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white hidden"></div>
+            </button>
+
+            <button onclick="viewMyProfile()" id="mobile-nav-profile" class="mobile-nav-item flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 gap-1 w-12 transition-colors">
+                <img id="mobile-nav-avatar" src="https://placehold.co/100x100" class="w-6 h-6 rounded-full object-cover ring-2 ring-transparent group-hover:ring-slate-200">
+                <span class="text-[10px] font-medium">Profile</span>
+            </button>
+        </nav>
 
     </div>
 
