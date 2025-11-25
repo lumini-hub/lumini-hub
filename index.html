@@ -1133,24 +1133,53 @@
         }
         
         function renderChatList(users) {
-             // Now we check allChatsCache to see if unread
-             document.getElementById('chat-list').innerHTML = users.map(u => {
-                 const chatId = [currentUser.uid, u.id].sort().join('_');
-                 const chatData = allChatsCache.find(c => c.id === chatId);
-                 const isUnread = chatData ? chatData.isUnread : false;
-                 
-                 return `<div onclick="initChat('${u.id}', '${u.name}', '${u.photoURL}')" class="flex items-center gap-3 p-3 hover:bg-white rounded-xl cursor-pointer ${isUnread ? 'bg-blue-50' : ''}">
-                    <div class="relative">
-                        <img src="${u.photoURL}" class="w-10 h-10 rounded-full bg-slate-200 object-cover">
-                        ${isUnread ? '<div class="absolute top-0 right-0 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></div>' : ''}
-                    </div>
-                    <div class="truncate flex-grow">
-                        <h4 class="font-bold text-sm text-slate-800 ${isUnread ? 'text-black' : ''}">${u.name}</h4>
-                        ${isUnread ? '<p class="text-[10px] text-blue-600 font-bold">New message</p>' : ''}
-                    </div>
-                 </div>`;
-             }).join('');
-        }
+                    // FILTER: Only show users with active conversations (chatId exists in allChatsCache)
+                    const activeConversations = users.filter(u => {
+                        const chatId = [currentUser.uid, u.id].sort().join('_');
+                        return allChatsCache.some(c => c.id === chatId);
+                    });
+                    
+                    // Sort by most recent activity
+                    activeConversations.sort((a, b) => {
+                        const chatA = allChatsCache.find(c => c.id === [currentUser.uid, a.id].sort().join('_'));
+                        const chatB = allChatsCache.find(c => c.id === [currentUser.uid, b.id].sort().join('_'));
+                        const timeA = chatA?.lastUpdated?.seconds || 0;
+                        const timeB = chatB?.lastUpdated?.seconds || 0;
+                        return timeB - timeA; // Most recent first
+                    });
+                    
+                    const container = document.getElementById('chat-list');
+                    
+                    // Show placeholder if no conversations exist
+                    if (activeConversations.length === 0) {
+                        container.innerHTML = `
+                            <div class="flex flex-col items-center justify-center py-8 px-4 text-center">
+                                <i class="fa-regular fa-comment-dots text-4xl text-slate-300 mb-3"></i>
+                                <p class="text-sm text-slate-500 font-medium mb-1">No conversations yet</p>
+                                <p class="text-xs text-slate-400">Visit Network to start chatting</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    // Render active conversations
+                    container.innerHTML = activeConversations.map(u => {
+                        const chatId = [currentUser.uid, u.id].sort().join('_');
+                        const chatData = allChatsCache.find(c => c.id === chatId);
+                        const isUnread = chatData ? chatData.isUnread : false;
+                        
+                        return `<div onclick="initChat('${u.id}', '${u.name}', '${u.photoURL}')" class="flex items-center gap-3 p-3 hover:bg-white rounded-xl cursor-pointer ${isUnread ? 'bg-blue-50' : ''}">
+                            <div class="relative">
+                                <img src="${u.photoURL}" class="w-10 h-10 rounded-full bg-slate-200 object-cover">
+                                ${isUnread ? '<div class="absolute top-0 right-0 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></div>' : ''}
+                            </div>
+                            <div class="truncate flex-grow">
+                                <h4 class="font-bold text-sm text-slate-800 ${isUnread ? 'text-black' : ''}">${u.name}</h4>
+                                ${isUnread ? '<p class="text-[10px] text-blue-600 font-bold">New message</p>' : ''}
+                            </div>
+                        </div>`;
+                    }).join('');
+                }
 
         window.toggleMenu = (postId, context) => {
             const menu = document.getElementById(`menu-${postId}-${context}`);
