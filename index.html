@@ -589,25 +589,36 @@
         
         const servers = {
             iceServers: [
-                { urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] },
-                // Open Relay Project - Free TURN servers
+                // Google STUN servers
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' },
+                { urls: 'stun:stun3.l.google.com:19302' },
+                { urls: 'stun:stun4.l.google.com:19302' },
+                // Metered TURN servers (free tier)
                 {
-                    urls: 'turn:openrelay.metered.ca:80',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
+                    urls: 'turn:a.relay.metered.ca:80',
+                    username: 'e46b68e8c405fd5f62d20927',
+                    credential: 'nkB+PUHC8t2i5Jdj'
                 },
                 {
-                    urls: 'turn:openrelay.metered.ca:443',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
+                    urls: 'turn:a.relay.metered.ca:80?transport=tcp',
+                    username: 'e46b68e8c405fd5f62d20927',
+                    credential: 'nkB+PUHC8t2i5Jdj'
                 },
                 {
-                    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
+                    urls: 'turn:a.relay.metered.ca:443',
+                    username: 'e46b68e8c405fd5f62d20927',
+                    credential: 'nkB+PUHC8t2i5Jdj'
+                },
+                {
+                    urls: 'turns:a.relay.metered.ca:443?transport=tcp',
+                    username: 'e46b68e8c405fd5f62d20927',
+                    credential: 'nkB+PUHC8t2i5Jdj'
                 }
             ],
-            iceCandidatePoolSize: 10
+            iceCandidatePoolSize: 10,
+            iceTransportPolicy: 'all' // Try all methods
         };
         
         // Auth Listener
