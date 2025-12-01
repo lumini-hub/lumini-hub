@@ -1223,7 +1223,20 @@
                 g.innerHTML = `<p class="col-span-2 text-center text-slate-400">No users found.</p>`; 
                 return; 
             }
-            g.innerHTML = users.map(u => `<div class="glass-card rounded-xl p-4 flex items-center gap-4 hover:border-blue-300 transition-colors cursor-pointer" onclick="startChat('${u.id}', '${u.name}')"><img src="${u.photoURL}" class="w-12 h-12 rounded-full bg-slate-100 object-cover"><div class="flex-grow"><h4 class="font-bold text-slate-800 text-sm">${u.name}</h4><p class="text-xs text-slate-500 truncate">${u.headline || 'Member'}</p></div><button class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100"><i class="fa-regular fa-comment-dots"></i></button></div>`).join('');
+            // MODIFIED: Inner div handles profile view, outer button handles chat
+            g.innerHTML = users.map(u => `
+            <div class="glass-card rounded-xl p-4 flex items-center gap-4 hover:border-blue-300 transition-colors">
+                <div class="flex items-center gap-4 flex-grow cursor-pointer" onclick="viewProfile('${u.id}')">
+                    <img src="${u.photoURL}" class="w-12 h-12 rounded-full bg-slate-100 object-cover">
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm">${u.name}</h4>
+                        <p class="text-xs text-slate-500 truncate">${u.headline || 'Member'}</p>
+                    </div>
+                </div>
+                <button onclick="startChat('${u.id}', '${u.name}')" class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-colors z-10" title="Message">
+                    <i class="fa-regular fa-comment-dots"></i>
+                </button>
+            </div>`).join('');
         }
 
         window.startChat = async (uid, name) => {
