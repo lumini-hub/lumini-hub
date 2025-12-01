@@ -77,6 +77,9 @@
         .blob-1 { top: -10%; left: -10%; width: 300px; height: 300px; background: #9333ea; animation: pulse 8s infinite; }
         .blob-2 { bottom: -10%; right: -10%; width: 350px; height: 350px; background: #2563eb; animation: pulse 10s infinite reverse; }
         
+        /* Online Status Dot */
+        .status-dot-online { width: 12px; height: 12px; background-color: #22c55e; border: 2px solid white; border-radius: 50%; position: absolute; bottom: 0; right: 0; }
+        
         /* Video Call Specific Styles */
         video { transform: scaleX(-1); } /* Mirror effect for self-view */
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
@@ -271,7 +274,7 @@
                             <div class="md:col-span-1 space-y-4">
                                 <div class="glass-card rounded-2xl p-5 bg-white">
                                     <h3 class="font-bold text-slate-800 mb-3 text-lg">Intro</h3>
-                                    <p id="profile-page-bio" class="text-sm text-slate-600 mb-4 leading-relaxed whitespace-pre-line">No bio yet.</p>
+                                    <p id="profile-page-bio" class="text-sm text-slate-600 mb-4 leading-relaxed whitespace-pre-line"></p>
                                     <div class="text-xs text-slate-400 flex items-center gap-2 mb-2"><i class="fa-solid fa-clock"></i> Joined <span id="profile-join-date">...</span></div>
                                 </div>
                             </div>
@@ -280,7 +283,7 @@
                                 <div id="profile-content-posts" class="space-y-6"></div>
                                 <div id="profile-content-about" class="hidden glass-card rounded-2xl p-6 bg-white">
                                     <h3 class="font-bold text-xl mb-4">Full Bio</h3>
-                                    <p id="profile-full-bio" class="text-slate-700 leading-relaxed whitespace-pre-line">No details available.</p>
+                                    <p id="profile-full-bio" class="text-slate-700 leading-relaxed whitespace-pre-line"></p>
                                 </div>
                                 <div id="profile-content-saved" class="hidden space-y-6"></div>
                             </div>
@@ -617,7 +620,7 @@
                     await setDoc(userDirRef, {
                         name: user.displayName || user.email.split('@')[0],
                         photoURL: user.photoURL || defaultAvatar,
-                        headline: "New Member",
+                        headline: "",
                         id: user.uid,
                         createdAt: serverTimestamp()
                     });
@@ -627,11 +630,15 @@
                 const userProfileSnap = await getDoc(userProfileRef);
                 if(!userProfileSnap.exists()) {
                     await setDoc(userProfileRef, {
-                        headline: "New Member",
-                        bio: "Hello, I am new here!",
+                        headline: "",
+                        bio: "",
                         savedPosts: []
                     });
                 }
+                
+                // Start Presence Heartbeat
+                setInterval(() => updatePresence(), 60000); // Every minute
+                updatePresence(); // Immediately
 
                 document.getElementById('auth-overlay').classList.add('opacity-0', 'pointer-events-none');
                 setTimeout(() => document.getElementById('auth-overlay').classList.add('hidden'), 500);
@@ -643,6 +650,23 @@
                 document.getElementById('auth-overlay').classList.remove('hidden', 'opacity-0', 'pointer-events-none');
             }
         });
+        
+        // --- PRESENCE SYSTEM ---
+        async function updatePresence() {
+            if(!currentUser) return;
+            const userDirRef = doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', currentUser.uid);
+            await updateDoc(userDirRef, {
+                lastActive: serverTimestamp()
+            }).catch(e => console.log("Presence update silent fail", e)); 
+        }
+        
+        function isOnline(user) {
+            if(!user.lastActive) return false;
+            // Firestore timestamp to JS Date
+            const lastActive = user.lastActive.seconds ? user.lastActive.seconds : 0;
+            const now = Math.floor(Date.now() / 1000);
+            return (now - lastActive) < 120; // Active within last 2 mins
+        }
 
         // --- CALL LOGIC ---
         function monitorIncomingCalls() {
@@ -1019,10 +1043,13 @@
                 const otherUid = parts[0] === currentUser.uid ? parts[1] : parts[0];
                 const otherUser = allUsersCache.find(u => u.id === otherUid) || { name: "User", photoURL: "https://placehold.co/100x100" };
                 const isUnread = c.readBy && !c.readBy.includes(currentUser.uid);
+                const online = isOnline(otherUser);
+                
                 return `<div onclick="openChat('${c.id}', '${otherUser.name}')" class="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-white transition-all ${c.id === currentChatId ? 'bg-white shadow-sm ring-1 ring-slate-100' : 'hover:shadow-sm'} ${isUnread ? 'bg-blue-50/50' : ''}">
                     <div class="relative">
                         <img src="${otherUser.photoURL}" class="w-10 h-10 rounded-full bg-slate-200 object-cover">
                         ${isUnread ? '<div class="absolute top-0 right-0 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></div>' : ''}
+                        ${online ? '<div class="status-dot-online"></div>' : ''}
                     </div>
                     <div class="truncate flex-grow">
                         <h4 class="font-bold text-sm text-slate-800 ${isUnread ? 'text-black' : ''}">${otherUser.name}</h4>
@@ -1132,7 +1159,7 @@
              const user = currentUser;
              const name = data.name || user.displayName || user.email.split('@')[0] || "User";
              const pic = data.photoURL || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
-             const headline = data.headline || "New Member";
+             const headline = data.headline || "";
 
              document.getElementById('nav-avatar').src = pic;
              document.getElementById('sidebar-mini-avatar').src = pic;
@@ -1224,10 +1251,15 @@
                 return; 
             }
             // MODIFIED: Inner div handles profile view, outer button handles chat
-            g.innerHTML = users.map(u => `
+            g.innerHTML = users.map(u => {
+                const online = isOnline(u);
+                return `
             <div class="glass-card rounded-xl p-4 flex items-center gap-4 hover:border-blue-300 transition-colors">
                 <div class="flex items-center gap-4 flex-grow cursor-pointer" onclick="viewProfile('${u.id}')">
-                    <img src="${u.photoURL}" class="w-12 h-12 rounded-full bg-slate-100 object-cover">
+                    <div class="relative">
+                        <img src="${u.photoURL}" class="w-12 h-12 rounded-full bg-slate-100 object-cover">
+                        ${online ? '<div class="status-dot-online"></div>' : ''}
+                    </div>
                     <div>
                         <h4 class="font-bold text-slate-800 text-sm">${u.name}</h4>
                         <p class="text-xs text-slate-500 truncate">${u.headline || 'Member'}</p>
@@ -1236,7 +1268,7 @@
                 <button onclick="startChat('${u.id}', '${u.name}')" class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-colors z-10" title="Message">
                     <i class="fa-regular fa-comment-dots"></i>
                 </button>
-            </div>`).join('');
+            </div>`}).join('');
         }
 
         window.startChat = async (uid, name) => {
@@ -1405,6 +1437,16 @@
              document.getElementById('profile-page-avatar').src = user ? user.photoURL : "https://placehold.co/100x100";
              document.getElementById('profile-page-headline').innerText = user ? (user.headline || "") : "";
              
+             // --- SHOW JOINED DATE ---
+             const dateSpan = document.getElementById('profile-join-date');
+             if (user.createdAt) {
+                 // Format: "Oct 24, 2025"
+                 const date = new Date(user.createdAt.seconds * 1000);
+                 dateSpan.innerText = date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+             } else {
+                 dateSpan.innerText = "Unknown";
+             }
+
              if(uid === currentUser.uid) {
                  document.getElementById('edit-profile-btn').classList.remove('hidden');
                  document.getElementById('follow-btn').classList.add('hidden');
@@ -1421,6 +1463,9 @@
                  const d = pDoc.data();
                  document.getElementById('profile-page-bio').innerText = d.bio || "No bio yet.";
                  document.getElementById('profile-full-bio').innerText = d.bio || "No details available.";
+             } else {
+                 document.getElementById('profile-page-bio').innerText = "No bio yet.";
+                 document.getElementById('profile-full-bio').innerText = "No details available.";
              }
              
              const userPosts = allPostsCache.filter(p => p.uid === uid);
