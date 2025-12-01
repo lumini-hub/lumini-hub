@@ -6,10 +6,13 @@
     <title>Lumini - Social</title>
     <link rel="icon" href="https://i.ibb.co/XZVSKkBT/Screenshot-2025-11-10-174930-Photoroom.png" type="image/x-icon">
     
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
 
     <script>
@@ -30,6 +33,7 @@
                     animation: {
                         'fade-in': 'fadeIn 0.3s ease-out',
                         'slide-up': 'slideUp 0.3s ease-out',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     },
                     keyframes: {
                         fadeIn: {
@@ -68,19 +72,29 @@
         .profile-tab.active { color: #2563eb; border-bottom-color: #2563eb; }
         .profile-tab:hover { color: #334155; }
         .notification-dot { position: absolute; top: -2px; right: -2px; width: 12px; height: 12px; background-color: #ef4444; border-radius: 50%; border: 2px solid white; display: none; }
+        .shape-blob { position: absolute; filter: blur(70px); z-index: 0; opacity: 0.6; }
+        .blob-1 { top: -10%; left: -10%; width: 300px; height: 300px; background: #9333ea; animation: pulse 8s infinite; }
+        .blob-2 { bottom: -10%; right: -10%; width: 350px; height: 350px; background: #2563eb; animation: pulse 10s infinite reverse; }
+        
+        /* Video Call Specific Styles */
+        video { transform: scaleX(-1); } /* Mirror effect for self-view */
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
     </style>
 </head>
 <body class="text-slate-800 font-sans antialiased overflow-x-hidden selection:bg-blue-100 selection:text-blue-900">
 
     <div id="app" class="min-h-screen flex flex-col transition-all duration-500">
         
+        <!-- Navbar -->
         <nav class="glass fixed top-0 w-full z-50 h-16 transition-all duration-300 shadow-sm">
             <div class="max-w-[1440px] mx-auto h-full flex items-center justify-between px-4 lg:px-6">
+                <!-- Logo -->
                 <div class="flex items-center gap-2 cursor-pointer w-1/4" onclick="window.location.reload()">
                     <img src="https://i.ibb.co/XZVSKkBT/Screenshot-2025-11-10-174930-Photoroom.png" alt="Lumini Logo" class="w-9 h-9 object-contain">
                     <span class="font-heading font-bold text-2xl tracking-tight text-gradient hidden sm:block">Lumini</span>
                 </div>
 
+                <!-- Search Bar -->
                 <div class="hidden md:flex relative items-center justify-center w-1/2">
                     <div class="relative w-full max-w-md">
                         <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
@@ -89,6 +103,7 @@
                     </div>
                 </div>
 
+                <!-- Right Menu -->
                 <div class="flex items-center justify-end w-1/4 gap-2 sm:gap-4">
                     <button onclick="router('messaging')" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors text-slate-600 relative">
                         <i class="fa-brands fa-facebook-messenger text-xl"></i>
@@ -123,6 +138,7 @@
             </div>
         </nav>
 
+        <!-- Auth Overlay -->
         <div id="auth-overlay" class="fixed inset-0 bg-slate-50 z-[60] flex items-center justify-center p-4 md:p-8 transition-all duration-500 overflow-hidden">
             <div class="shape-blob blob-1 rounded-full"></div>
             <div class="shape-blob blob-2 rounded-full"></div>
@@ -151,9 +167,11 @@
             </div>
         </div>
 
+        <!-- Main Layout -->
         <main class="flex-grow pt-20 pb-6 px-4">
             <div class="max-w-[1440px] mx-auto grid grid-cols-1 md:grid-cols-12 gap-8">
                 
+                <!-- Left Sidebar -->
                 <aside class="hidden md:block md:col-span-3 space-y-2 sticky top-24 h-fit">
                     <div onclick="viewMyProfile()" class="sidebar-link mb-4 hover:bg-slate-200 rounded-xl transition-colors">
                         <img id="sidebar-mini-avatar" src="" class="w-9 h-9 rounded-full object-cover bg-slate-300">
@@ -170,8 +188,10 @@
                     <div class="mt-8 px-4 text-[10px] text-slate-400 leading-relaxed">Lumini © 2025 · Privacy · Terms · Cookies · More</div>
                 </aside>
 
+                <!-- Center Content -->
                 <section id="main-container" class="md:col-span-6 col-span-12">
                     
+                    <!-- View: Feed -->
                     <div id="view-feed" class="view-section space-y-6">
                         <div class="glass-card rounded-2xl p-4 bg-white">
                             <div class="flex gap-4 mb-4">
@@ -188,6 +208,7 @@
                         <div id="feed-stream" class="space-y-5 pb-20"><div class="text-center py-12"><i class="fa-solid fa-circle-notch fa-spin text-blue-500 text-2xl"></i></div></div>
                     </div>
 
+                    <!-- View: Saved -->
                     <div id="view-saved" class="view-section hidden space-y-6">
                         <div class="glass-card rounded-2xl p-6 bg-white mb-4">
                             <h2 class="font-heading font-bold text-2xl text-slate-800 flex items-center gap-3"><i class="fa-solid fa-bookmark text-purple-600"></i> Saved Posts</h2>
@@ -196,6 +217,7 @@
                         <div id="saved-posts-stream" class="space-y-5 pb-20"></div>
                     </div>
 
+                    <!-- View: Network -->
                     <div id="view-network" class="view-section hidden space-y-4">
                         <div class="glass-card rounded-2xl p-6 mb-6 bg-white">
                             <h2 class="font-heading font-bold text-2xl text-slate-800">Grow your Network</h2>
@@ -204,6 +226,7 @@
                         <div id="network-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
                     </div>
 
+                    <!-- View: Profile -->
                     <div id="view-profile" class="view-section hidden space-y-6 animate-fade-in">
                         <div class="glass-card rounded-2xl overflow-hidden bg-white">
                             <div class="h-40 bg-gradient-to-r from-blue-500 to-purple-600 relative">
@@ -263,13 +286,20 @@
                         </div>
                     </div>
 
+                    <!-- View: Messaging -->
                     <div id="view-messaging" class="view-section hidden h-[calc(100vh-140px)] glass-card rounded-2xl flex overflow-hidden border border-slate-200">
                         <div class="w-1/3 border-r border-slate-100 bg-slate-50/50 flex flex-col">
                             <div class="p-4 border-b border-slate-100"><h3 class="font-heading font-bold text-slate-800">Chats</h3></div>
                             <div id="chat-list" class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar"></div>
                         </div>
                         <div class="w-2/3 flex flex-col bg-white relative">
-                            <div id="chat-header" class="h-16 border-b border-slate-100 flex items-center px-6 justify-between bg-white/80 backdrop-blur"><span class="font-bold text-slate-400 text-sm">Select a conversation</span></div>
+                            <div id="chat-header" class="h-16 border-b border-slate-100 flex items-center px-6 justify-between bg-white/80 backdrop-blur">
+                                <span class="font-bold text-slate-400 text-sm">Select a conversation</span>
+                                <!-- Video Call Button (Hidden until chat selected) -->
+                                <button id="start-call-btn" onclick="initiateCall()" class="hidden text-blue-500 hover:text-blue-600 w-10 h-10 rounded-full hover:bg-blue-50 flex items-center justify-center transition-all" title="Start Video Call">
+                                    <i class="fa-solid fa-video text-lg"></i>
+                                </button>
+                            </div>
                             <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/30 custom-scrollbar flex flex-col"><div class="flex h-full items-center justify-center text-slate-400 text-sm flex-col gap-2"><i class="fa-regular fa-paper-plane text-4xl mb-2 opacity-50"></i><p>Select a user to start chatting.</p></div></div>
                             <div class="p-4 border-t border-slate-100 bg-white">
                                 <form id="message-form" class="flex gap-2" onsubmit="sendMessage(event)">
@@ -281,6 +311,7 @@
                     </div>
                 </section>
 
+                <!-- Right Sidebar -->
                 <aside id="right-sidebar" class="hidden md:block md:col-span-3 space-y-6 sticky top-24 h-fit">
                     <div class="glass-card rounded-2xl p-5 bg-white">
                         <h3 class="font-heading font-bold text-slate-500 text-sm mb-4 uppercase">Documentation</h3>
@@ -301,6 +332,9 @@
             </div>
         </main>
 
+        <!-- Modals -->
+        
+        <!-- Settings Modal -->
         <div id="settings-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[85] hidden flex items-center justify-center p-4">
             <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-slide-up">
                 <div class="flex justify-between items-center p-5 border-b border-slate-100">
@@ -325,6 +359,7 @@
             </div>
         </div>
 
+        <!-- Edit Profile Modal -->
         <div id="edit-profile-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80] hidden flex items-center justify-center p-4">
             <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-slide-up">
                 <div class="flex justify-between items-center p-5 border-b border-slate-100">
@@ -358,6 +393,7 @@
             </div>
         </div>
 
+        <!-- Post Modal -->
         <div id="post-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] hidden flex items-center justify-center p-4">
             <div class="relative bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-slide-up">
                 <div class="relative flex justify-between items-center p-4 border-b border-slate-100">
@@ -371,9 +407,9 @@
                     </div>
                     <textarea id="post-input" rows="4" class="w-full resize-none outline-none text-slate-700 placeholder-slate-400 text-lg" placeholder="What's on your mind?"></textarea>
                     <div id="attachment-preview" class="hidden mt-2 relative group"><img id="preview-img" src="" class="max-h-48 rounded-lg border border-slate-200"><button onclick="clearAttachment()" class="absolute top-2 right-2 bg-black/50 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-black"><i class="fa-solid fa-xmark"></i></button></div>
-                    <div id="project-tags-input" class="hidden mt-3 pt-3 border-t border-dashed border-slate-200"><label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Looking For:</label><input type="text" id="tags-input-field" placeholder="e.g. Developer, Designer" class="w-full text-sm p-2.5 bg-slate-50 rounded-lg border border-slate-200 outline-none"></div>
+                    <div id="project-tags-input" class="hidden mt-3 pt-3 border-t border-dashed border-slate-200"><label class="text-xs font-bold text-slate-500 uppercase mb-1">Tags (Comma separated)</label><input id="tags-input" type="text" class="w-full text-sm bg-slate-50 p-2 rounded-lg outline-none" placeholder="e.g. #javascript, #design"></div>
                 </div>
-                <div class="p-4 m-4 mt-0 border border-slate-200 rounded-lg flex justify-between items-center">
+                <div class="px-4 pb-4 flex justify-between items-center relative">
                     <span class="text-sm font-bold text-slate-700">Add to your post</span>
                     <div class="flex gap-3 text-xl">
                         <input type="file" id="file-input" class="hidden" accept="image/*" onchange="handleFileSelect(this)">
@@ -383,67 +419,110 @@
                     </div>
                 </div>
                 <div class="p-4 pt-0"><button id="post-submit-btn" onclick="submitPost()" class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 transition-colors">Post</button></div>
+                
                 <div id="emoji-picker" class="hidden absolute bottom-20 right-8 bg-white border border-slate-200 shadow-xl rounded-lg p-2 grid grid-cols-5 gap-2 w-48 z-50">
-                    <span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('👍')">👍</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('🔥')">🔥</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('🚀')">🚀</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('💻')">💻</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('🎉')">🎉</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('❤️')">❤️</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('😂')">😂</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('✨')">✨</span>
+                    <span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('👍')">👍</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('🔥')">🔥</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('🚀')">🚀</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('💻')">💻</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('🎉')">🎉</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('❤️')">❤️</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('😂')">😂</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('😮')">😮</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('😢')">😢</span><span class="cursor-pointer hover:bg-slate-100 p-1 rounded text-center" onclick="insertEmoji('👋')">👋</span>
                 </div>
-                <div id="tag-picker" class="hidden absolute bottom-20 right-8 bg-white border border-slate-200 shadow-xl rounded-lg w-64 z-50 max-h-80 overflow-y-auto custom-scrollbar">
-                    <div class="p-3 border-b border-slate-100">
-                        <input type="text" id="tag-search" placeholder="Search people..." class="w-full text-sm p-2 bg-slate-50 rounded-lg border border-slate-200 outline-none focus:border-blue-500" oninput="filterTagList(this.value)">
+                
+                <div id="tag-picker" class="hidden absolute bottom-20 right-20 bg-white border border-slate-200 shadow-xl rounded-lg p-2 w-48 z-50 max-h-40 overflow-y-auto custom-scrollbar">
+                   <div id="tag-list" class="space-y-1"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Delete Confirmation Modal -->
+        <div id="delete-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[90] hidden flex items-center justify-center p-4 transition-all duration-300 opacity-0">
+             <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full transform scale-95 transition-all duration-300 text-center">
+                 <i class="fa-solid fa-triangle-exclamation text-4xl text-red-500 mb-4"></i>
+                 <h3 class="font-bold text-lg mb-2">Delete Post?</h3>
+                 <p class="text-slate-500 text-sm mb-6">This action cannot be undone.</p>
+                 <div class="flex gap-3 justify-center">
+                     <button onclick="closeDeleteModal()" class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium">Cancel</button>
+                     <button onclick="confirmDelete()" class="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium">Delete</button>
+                 </div>
+             </div>
+        </div>
+
+        <!-- CALL INTERFACE (NEW) -->
+        <div id="call-interface" class="hidden fixed inset-0 z-[100] bg-slate-900 flex items-center justify-center">
+            <div class="relative w-full h-full max-w-5xl max-h-[90vh] bg-black md:rounded-2xl overflow-hidden flex flex-col">
+                <!-- Header -->
+                <div class="absolute top-0 left-0 w-full p-4 bg-gradient-to-b from-black/70 to-transparent z-10 flex justify-between items-center text-white">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-video text-red-500 animate-pulse"></i>
+                        <span id="call-status-text" class="font-medium">Connecting...</span>
                     </div>
-                    <div id="tag-list" class="p-2"></div>
+                </div>
+
+                <!-- Main Video Area -->
+                <div class="relative flex-grow bg-slate-800 flex items-center justify-center overflow-hidden">
+                    <!-- Remote Video (Full Screen) -->
+                    <video id="remoteVideo" autoplay playsinline class="w-full h-full object-cover"></video>
+                    
+                    <!-- Local Video (Picture in Picture) -->
+                    <div class="absolute bottom-4 right-4 w-32 h-48 md:w-48 md:h-64 bg-slate-900 rounded-xl overflow-hidden border-2 border-slate-700 shadow-2xl">
+                        <video id="localVideo" autoplay muted playsinline class="w-full h-full object-cover"></video>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="p-6 bg-slate-900 flex justify-center gap-6">
+                    <button id="btn-toggle-mic" onclick="toggleAudio()" class="w-12 h-12 rounded-full bg-slate-700 hover:bg-slate-600 text-white flex items-center justify-center transition-all"><i class="fa-solid fa-microphone"></i></button>
+                    <button id="btn-toggle-cam" onclick="toggleVideo()" class="w-12 h-12 rounded-full bg-slate-700 hover:bg-slate-600 text-white flex items-center justify-center transition-all"><i class="fa-solid fa-video"></i></button>
+                    <button onclick="endCall()" class="w-14 h-14 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center transition-all shadow-lg shadow-red-900/50"><i class="fa-solid fa-phone-slash text-xl"></i></button>
                 </div>
             </div>
         </div>
 
-        <div id="delete-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80] hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
-            <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl transform scale-95 transition-all duration-300 p-6 text-center">
-                <div class="w-16 h-16 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto mb-4"><i class="fa-regular fa-trash-can text-2xl"></i></div>
-                <h3 class="font-heading font-bold text-xl text-slate-800 mb-2">Delete Post?</h3>
-                <p class="text-slate-500 text-sm mb-6 leading-relaxed">Are you sure you want to remove this post permanently?</p>
-                <div class="flex gap-3 justify-center">
-                    <button onclick="closeDeleteModal()" class="flex-1 px-5 py-3 rounded-xl text-slate-600 font-bold text-sm hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all">Cancel</button>
-                    <button onclick="confirmDelete()" class="flex-1 px-5 py-3 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 shadow-lg">Yes, Delete</button>
-                </div>
+        <!-- INCOMING CALL MODAL (NEW) -->
+        <div id="incoming-call-modal" class="hidden fixed top-4 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-2xl z-[110] border border-blue-100 flex items-center gap-4 animate-slide-up w-max max-w-[90vw]">
+            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center animate-pulse-slow">
+                <i class="fa-solid fa-phone-volume text-blue-600 text-xl"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-slate-800">Incoming Call...</h3>
+                <p id="caller-name-display" class="text-xs text-slate-500">User is calling you</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="declineCall()" class="w-10 h-10 rounded-full bg-red-100 hover:bg-red-200 text-red-600 flex items-center justify-center transition-colors"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="answerCall()" class="w-10 h-10 rounded-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-colors shadow-lg shadow-green-200"><i class="fa-solid fa-phone text-sm"></i></button>
             </div>
         </div>
-
-        <div id="toast">Action Successful</div>
-        <nav id="mobile-bottom-nav" class="md:hidden fixed bottom-0 left-0 w-full h-16 bg-white/95 backdrop-blur-xl border-t border-slate-200 z-50 flex justify-between items-center px-6 pb-safe transition-all duration-300">
-            <button onclick="router('feed')" id="mobile-nav-feed" class="mobile-nav-item flex flex-col items-center justify-center text-blue-600 gap-1 w-12 transition-colors">
+        
+        <!-- Mobile Bottom Nav -->
+        <div class="md:hidden fixed bottom-0 w-full bg-white/90 backdrop-blur border-t border-slate-200 h-16 flex justify-around items-center z-40 pb-safe">
+            <button onclick="router('feed')" class="mobile-nav-item flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 gap-1 w-12 transition-colors">
                 <i class="fa-solid fa-house text-xl"></i>
                 <span class="text-[10px] font-medium">Home</span>
             </button>
-            
-            <button onclick="router('network')" id="mobile-nav-network" class="mobile-nav-item flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 gap-1 w-12 transition-colors">
+            <button onclick="router('network')" class="mobile-nav-item flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 gap-1 w-12 transition-colors">
                 <i class="fa-solid fa-user-group text-xl"></i>
                 <span class="text-[10px] font-medium">Network</span>
             </button>
-
-            <button onclick="openPostModal()" class="flex flex-col items-center justify-center -mt-8 group">
-                <div class="w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center text-white transform transition-transform group-active:scale-95 border-[4px] border-[#f0f2f5]">
+            <div class="relative -top-5">
+                <button onclick="openPostModal()" class="w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full text-white flex items-center justify-center shadow-lg shadow-blue-500/30 transform transition-transform active:scale-95">
                     <i class="fa-solid fa-plus text-2xl"></i>
-                </div>
-            </button>
-
-            <button onclick="router('messaging')" id="mobile-nav-messaging" class="mobile-nav-item flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 gap-1 w-12 transition-colors relative">
+                </button>
+            </div>
+             <button onclick="router('messaging')" id="mobile-nav-messaging" class="mobile-nav-item flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 gap-1 w-12 transition-colors relative">
                 <i class="fa-brands fa-facebook-messenger text-xl"></i>
                 <span class="text-[10px] font-medium">Chat</span>
                 <div id="mobile-chat-badge" class="absolute top-0 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white hidden"></div>
             </button>
-
             <button onclick="viewMyProfile()" id="mobile-nav-profile" class="mobile-nav-item flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 gap-1 w-12 transition-colors">
                 <img id="mobile-nav-avatar" src="https://placehold.co/100x100" class="w-6 h-6 rounded-full object-cover ring-2 ring-transparent group-hover:ring-slate-200">
                 <span class="text-[10px] font-medium">Profile</span>
             </button>
-        </nav>
-
+        </div>
     </div>
 
+    <!-- MAIN SCRIPT -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, sendPasswordResetEmail, updateProfile, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, updateDoc, increment, setDoc, getDoc, getDocs, arrayUnion, arrayRemove, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
+        // --- CONFIGURATION ---
         const luminiConfig = {
           apiKey: "AIzaSyDtV1VuCnNCDeuHwGX4ZUCG0WMJM82-hBY",
           authDomain: "luminix-bcc28.firebaseapp.com",
@@ -454,84 +533,89 @@
           appId: "1:217255412785:web:dccb64a43aa83c6b234110",
           measurementId: "G-TKJELBK1F5"
         };
-
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'lumini-social';
+        
+        // Initialize Firebase
         const app = initializeApp(luminiConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const appId = "lumini_v1"; // Namespace for database
 
-        // Global variables for HTML access
+        // State
         window.currentUser = null;
-        let currentUser = null; // Local reference
-        
-        let currentChatId = null;
         let unsubscribePosts = null;
-        let unsubscribeUsers = null;
-        let unsubscribeChat = null;
-        let unsubscribeNotifications = null;
         let unsubscribeChatList = null;
+        let unsubscribeMessages = null;
+        let unsubscribeNotifications = null;
+        let currentChatId = null;
+        let mySavedPosts = [];
         let allPostsCache = []; 
         let allUsersCache = [];
         let allNotifications = [];
-        let allChatsCache = [];
-        let currentAttachment = null; 
-        let editModeId = null; 
         let postToDeleteId = null;
-        let mySavedPosts = []; 
-
-        const defaultAvatar = 'https://placehold.co/200x200?text=User';
-
-        const initAuth = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                try { await signInWithCustomToken(auth, __initial_auth_token); } 
-                catch (e) { console.log("No custom token."); }
-            }
+        let editModeId = null;
+        let currentAttachment = null;
+        window.taggedUsers = [];
+        
+        // --- CALL STATE ---
+        let localStream = null;
+        let remoteStream = null;
+        let peerConnection = null;
+        let currentCallId = null;
+        let unsubscribeCall = null;
+        let incomingCallData = null;
+        
+        const servers = {
+            iceServers: [
+                { urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] }
+            ]
         };
-        initAuth();
 
+        // Auth Listener - UPDATED for Automatic Registration
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
-                window.currentUser = user; // Expose to window for HTML events
+                window.currentUser = user;
+                
+                // 1. Ensure Display Name Exists locally
+                if(!user.displayName) {
+                    const name = user.email.split('@')[0];
+                    await updateProfile(user, { displayName: name });
+                }
+                
+                // 2. Ensure Photo Exists locally
+                const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.email)}&background=random`;
+                if(!user.photoURL) {
+                     await updateProfile(user, { photoURL: defaultAvatar });
+                }
+
+                // 3. CRITICAL: Register in Public Directory (Fixes "No Users" issue)
+                const userDirRef = doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', user.uid);
+                const userDirSnap = await getDoc(userDirRef);
+                
+                if (!userDirSnap.exists()) {
+                    await setDoc(userDirRef, {
+                        name: user.displayName || user.email.split('@')[0],
+                        photoURL: user.photoURL || defaultAvatar,
+                        headline: "New Member",
+                        id: user.uid,
+                        createdAt: serverTimestamp()
+                    });
+                }
+                
+                // 4. CRITICAL: Ensure Profile Doc Exists (Fixes "Guest" label issue)
+                const userProfileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'main');
+                const userProfileSnap = await getDoc(userProfileRef);
+                if(!userProfileSnap.exists()) {
+                    await setDoc(userProfileRef, {
+                        headline: "New Member",
+                        bio: "Hello, I am new here!",
+                        savedPosts: []
+                    });
+                }
+
                 document.getElementById('auth-overlay').classList.add('opacity-0', 'pointer-events-none');
                 setTimeout(() => document.getElementById('auth-overlay').classList.add('hidden'), 500);
-                
-                try {
-                    const userRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'main');
-                    const userSnap = await getDoc(userRef);
-                    let photoURL = user.photoURL || defaultAvatar;
 
-                    if (!userSnap.exists()) {
-                        const baseData = {
-                            name: user.displayName || user.email?.split('@')[0] || "Member",
-                            email: user.email || "Anonymous",
-                            photoURL: photoURL,
-                            headline: "New Member",
-                            bio: "",
-                            uid: user.uid,
-                            createdAt: serverTimestamp(),
-                            followers: [],
-                            savedPosts: []
-                        };
-                        await setDoc(userRef, baseData);
-                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', user.uid), baseData);
-                    }
-                    
-                    onSnapshot(userRef, (doc) => {
-                        if(doc.exists()) {
-                            const d = doc.data();
-                            mySavedPosts = d.savedPosts || [];
-                            updateUI(d);
-                            if(allPostsCache.length) renderFeed(allPostsCache);
-                            if(!document.getElementById('view-saved').classList.contains('hidden')) renderSavedPosts();
-                        }
-                    });
-
-                    // Start Listeners
-                    monitorNotifications();
-                    monitorChats();
-
-                } catch (e) { console.error(e); }
                 loadData();
             } else {
                 currentUser = null;
@@ -540,964 +624,376 @@
             }
         });
 
-        // --- NEW: Notification System ---
-        function monitorNotifications() {
-             if(unsubscribeNotifications) unsubscribeNotifications();
-             const q = query(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'notifications'), orderBy('createdAt', 'desc'));
-             unsubscribeNotifications = onSnapshot(q, (snap) => {
-                 allNotifications = [];
-                 let unreadCount = 0;
-                 snap.forEach(d => {
-                     const n = {id: d.id, ...d.data()};
-                     allNotifications.push(n);
-                     if(!n.read) unreadCount++;
-                 });
-                 
-                 const badge = document.getElementById('notification-badge');
-                 if(unreadCount > 0) {
-                     badge.style.display = 'block';
-                 } else {
-                     badge.style.display = 'none';
-                 }
-                 renderNotificationsList();
-             });
-        }
-
-        function renderNotificationsList() {
-            const list = document.getElementById('notification-list');
-            if(allNotifications.length === 0) {
-                list.innerHTML = `<p class="text-center text-xs text-slate-400 py-4">No new notifications.</p>`;
-                return;
-            }
-            list.innerHTML = allNotifications.map(n => {
-                let content = '';
-                let icon = 'fa-user';
-                let iconColor = 'text-blue-500';
-                
-                if (n.type === 'follow') {
-                    content = `<span class="font-bold">${n.fromName}</span> started following you.`;
-                    icon = 'fa-user-plus';
-                    iconColor = 'text-blue-500';
-                } else if (n.type === 'mention') {
-                    content = `<span class="font-bold">${n.fromName}</span> mentioned you in a post.`;
-                    icon = 'fa-at';
-                    iconColor = 'text-purple-500';
-                    if (n.text) {
-                        content += `<p class="text-xs text-slate-500 mt-1 line-clamp-2">"${n.text}"</p>`;
+        // --- NEW: Call Logic ---
+        
+        // 1. Monitor Incoming Calls
+        function monitorIncomingCalls() {
+            const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'calls'), orderBy('createdAt', 'desc'));
+            
+            onSnapshot(q, (snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    const data = change.doc.data();
+                    if (change.type === "added" && data.callee === currentUser.uid && data.status === 'offering') {
+                        showIncomingCall(change.doc.id, data);
                     }
-                }
-                
-                return `
-                <div onclick="handleNotificationClick('${n.id}', '${n.fromUid}', '${n.type}', '${n.postId || ''}')" class="flex items-start gap-3 p-3 hover:bg-slate-50 cursor-pointer rounded-lg transition-colors ${!n.read ? 'bg-blue-50/50' : ''}">
-                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center flex-shrink-0">
-                        ${n.fromPhoto ? `<img src="${n.fromPhoto}" class="w-full h-full rounded-full object-cover">` : `<i class="fa-solid ${icon} ${iconColor} text-sm"></i>`}
-                    </div>
-                    <div class="flex-grow min-w-0">
-                        <p class="text-sm text-slate-700">${content}</p>
-                        <p class="text-[10px] text-slate-400 mt-0.5">Just now</p>
-                    </div>
-                    ${!n.read ? '<div class="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>' : ''}
-                </div>
-            `;
-            }).join('');
-        }
-
-        window.toggleNotificationDropdown = () => {
-             const d = document.getElementById('notification-dropdown');
-             d.classList.toggle('hidden');
-             // Mark all as read when opened? Optional. Let's do individual mark on click.
-        };
-
-        window.handleNotificationClick = async (notifId, fromUid, type, postId) => {
-            // Mark as read
-            try {
-                await updateDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'notifications', notifId), { read: true });
-            } catch(e) {}
-            document.getElementById('notification-dropdown').classList.add('hidden');
-            
-            // Navigate based on notification type
-            if (type === 'mention' && postId) {
-                // Go to feed and scroll to the post
-                router('feed');
-                setTimeout(() => {
-                    const postElement = document.getElementById(`post-${postId}-feed`);
-                    if (postElement) {
-                        postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        postElement.classList.add('ring-2', 'ring-blue-400', 'ring-offset-2');
-                        setTimeout(() => {
-                            postElement.classList.remove('ring-2', 'ring-blue-400', 'ring-offset-2');
-                        }, 2000);
-                    }
-                }, 300);
-            } else if (type === 'follow') {
-                // Go to the user's profile
-                viewProfile(fromUid);
-            }
-        };
-
-        // --- NEW: Chat Monitoring ---
-        function monitorChats() {
-            // Need a way to know which chats I am part of. 
-            // Current structure is chats/{chatId}. ID is composite.
-            // We can query all chats where ID contains uid? No, too expensive.
-            // Better: We list the users we have chatted with.
-            // For this simpler demo, we will check the 'users_directory' or rely on local 'chats' list if we had one.
-            // FIX: We will maintain a list of active chats in user profile or use composite keys.
-            // Let's rely on iterating all users for the list, and checking specific composite keys.
-            // Optimized approach for this specific codebase:
-            // We will listen to specific chat paths for the users in our directory.
-            // Actually, let's just create a `chats` collection where `participants` array contains currentUser.uid
-            
-            // To make "Messenger Icon Light Up" work without changing DB schema too much:
-            // We will assume standard chat IDs: uid1_uid2 (sorted).
-            // We can't query collections easily by ID pattern.
-            // We will add a 'participants' array to the chat document when created.
-            
-            if(unsubscribeChatList) unsubscribeChatList();
-            const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'chats'), orderBy('lastUpdated', 'desc'));
-            
-            unsubscribeChatList = onSnapshot(q, (snap) => {
-                 let hasUnread = false;
-                 allChatsCache = [];
-                 
-                 snap.forEach(d => {
-                     const data = d.data();
-                     if(d.id.includes(currentUser.uid)) {
-                         // Check if unread
-                         const isUnread = data.readBy && !data.readBy.includes(currentUser.uid);
-                         if(isUnread) hasUnread = true;
-                         allChatsCache.push({id: d.id, ...data, isUnread});
-                     }
-                 });
-                 
-                 const badge = document.getElementById('chat-badge');
-                 badge.style.display = hasUnread ? 'block' : 'none';
-                 renderChatList(allUsersCache); // Re-render list to show bold/dots
+                });
             });
         }
+        
+        function showIncomingCall(callId, data) {
+            currentCallId = callId;
+            incomingCallData = data;
+            document.getElementById('caller-name-display').innerText = (data.callerName || "Someone") + " is calling...";
+            document.getElementById('incoming-call-modal').classList.remove('hidden');
+        }
 
-
-        window.handleEmailAuth = async () => {
-            const email = document.getElementById('auth-email').value;
-            const pass = document.getElementById('auth-password').value;
-            try { await signInWithEmailAndPassword(auth, email, pass); } 
-            catch (err) { try { await createUserWithEmailAndPassword(auth, email, pass); } catch (e) { document.getElementById('auth-error').innerText = e.message; document.getElementById('auth-error').classList.remove('hidden'); } }
+        window.declineCall = async () => {
+            document.getElementById('incoming-call-modal').classList.add('hidden');
+            currentCallId = null;
+            incomingCallData = null;
         };
-        window.handleGoogleAuth = async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (e) { console.error(e); } };
-        window.handleSignOut = () => signOut(auth);
 
-        function updateUI(data) {
-            const pic = data.photoURL || defaultAvatar;
-            document.getElementById('nav-avatar').src = pic;
-            document.getElementById('sidebar-mini-avatar').src = pic;
-            document.getElementById('menu-avatar-small').src = pic;
-            document.getElementById('composer-avatar').src = pic;
-            document.getElementById('modal-avatar').src = pic;
-            document.getElementById('sidebar-mini-name').innerText = data.name || "User";
-            document.getElementById('menu-name').innerText = data.name || "User";
-            document.getElementById('composer-name-placeholder').innerText = (data.name || "User").split(' ')[0];
-            
-            // Sync inputs with data
-            document.getElementById('settings-username').value = data.name || "";
-            document.getElementById('edit-headline').value = data.headline || "";
-            document.getElementById('edit-bio').value = data.bio || "";
-            document.getElementById('edit-modal-avatar').src = pic;
+        window.answerCall = async () => {
+            document.getElementById('incoming-call-modal').classList.add('hidden');
+            document.getElementById('call-interface').classList.remove('hidden');
+            document.getElementById('call-status-text').innerText = "Connecting...";
+
+            const callId = currentCallId;
+            const offer = incomingCallData.offer;
+
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                document.getElementById('localVideo').srcObject = localStream;
+                document.getElementById('remoteVideo').srcObject = new MediaStream();
+
+                peerConnection = new RTCPeerConnection(servers);
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+                peerConnection.ontrack = (event) => {
+                    event.streams[0].getTracks().forEach(track => {
+                        document.getElementById('remoteVideo').srcObject.addTrack(track);
+                    });
+                };
+
+                peerConnection.onicecandidate = async (event) => {
+                    if(event.candidate) {
+                        const calleeCandidatesRef = collection(db, 'artifacts', appId, 'public', 'data', 'calls', callId, 'calleeCandidates');
+                        await addDoc(calleeCandidatesRef, event.candidate.toJSON());
+                    }
+                };
+
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+
+                const callDoc = doc(db, 'artifacts', appId, 'public', 'data', 'calls', callId);
+                await updateDoc(callDoc, { answer: { type: answer.type, sdp: answer.sdp }, status: 'answered' });
+
+                const callerCandidatesRef = collection(db, 'artifacts', appId, 'public', 'data', 'calls', callId, 'callerCandidates');
+                onSnapshot(callerCandidatesRef, (snapshot) => {
+                    snapshot.docChanges().forEach((change) => {
+                        if (change.type === 'added') {
+                            const candidate = new RTCIceCandidate(change.doc.data());
+                            peerConnection.addIceCandidate(candidate);
+                        }
+                    });
+                });
+                
+                onSnapshot(callDoc, (snap) => {
+                    if(snap.exists() && snap.data().status === 'ended') endCallCleanup();
+                });
+            } catch (err) {
+                console.error("Error answering call:", err);
+                alert("Could not access camera/microphone. Please check permissions.");
+                endCallCleanup();
+            }
+        };
+
+        window.initiateCall = async () => {
+            if(!currentChatId) return;
+            const parts = currentChatId.split('_');
+            const targetUid = parts.find(id => id !== currentUser.uid);
+            if(!targetUid) return alert("Cannot call this user.");
+
+            document.getElementById('call-interface').classList.remove('hidden');
+            document.getElementById('call-status-text').innerText = "Calling...";
+
+            try {
+                const callDocRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'calls'));
+                currentCallId = callDocRef.id;
+
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                document.getElementById('localVideo').srcObject = localStream;
+                document.getElementById('remoteVideo').srcObject = new MediaStream();
+
+                peerConnection = new RTCPeerConnection(servers);
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+                peerConnection.ontrack = (event) => {
+                    event.streams[0].getTracks().forEach(track => {
+                        document.getElementById('remoteVideo').srcObject.addTrack(track);
+                    });
+                };
+
+                peerConnection.onicecandidate = async (event) => {
+                    if(event.candidate) {
+                        const callerCandidatesRef = collection(db, 'artifacts', appId, 'public', 'data', 'calls', currentCallId, 'callerCandidates');
+                        await addDoc(callerCandidatesRef, event.candidate.toJSON());
+                    }
+                };
+
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+
+                await setDoc(callDocRef, {
+                    caller: currentUser.uid,
+                    callerName: document.getElementById('menu-name').innerText,
+                    callee: targetUid,
+                    offer: { type: offer.type, sdp: offer.sdp },
+                    status: 'offering',
+                    createdAt: serverTimestamp()
+                });
+
+                unsubscribeCall = onSnapshot(callDocRef, (snap) => {
+                    const data = snap.data();
+                    if(!data) return;
+                    
+                    if(!peerConnection.currentRemoteDescription && data.answer) {
+                        const answer = new RTCSessionDescription(data.answer);
+                        peerConnection.setRemoteDescription(answer);
+                        document.getElementById('call-status-text').innerText = "Connected";
+                    }
+                    
+                    if(data.status === 'ended') endCallCleanup();
+                });
+
+                const calleeCandidatesRef = collection(db, 'artifacts', appId, 'public', 'data', 'calls', currentCallId, 'calleeCandidates');
+                onSnapshot(calleeCandidatesRef, (snapshot) => {
+                    snapshot.docChanges().forEach((change) => {
+                        if (change.type === 'added') {
+                            const candidate = new RTCIceCandidate(change.doc.data());
+                            peerConnection.addIceCandidate(candidate);
+                        }
+                    });
+                });
+            } catch (err) {
+                console.error("Error initiating call:", err);
+                alert("Could not access camera/microphone. Ensure you are on HTTPS.");
+                endCallCleanup();
+            }
+        };
+
+        window.endCall = async () => {
+             if(currentCallId) {
+                 try {
+                     await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'calls', currentCallId), { status: 'ended' });
+                 } catch(e) {}
+             }
+             endCallCleanup();
+        };
+
+        function endCallCleanup() {
+            document.getElementById('call-interface').classList.add('hidden');
+            if(peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+            }
+            if(localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            if(unsubscribeCall) unsubscribeCall();
+            currentCallId = null;
         }
 
-        function createPostHTML(post, context) {
-            const isProject = post.type === 'project';
-            const tags = post.tags ? post.tags.map(t => `<span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md">#${t}</span>`).join('') : '';
-            const hasLiked = post.likedBy && post.likedBy.includes(currentUser.uid);
-            const isSaved = mySavedPosts.includes(post.id);
-            
-            const likeIconClass = hasLiked ? "fa-solid text-blue-600" : "fa-regular";
-            const likeTextClass = hasLiked ? "text-blue-600 font-bold" : "text-slate-500";
-            const saveIconClass = isSaved ? "fa-solid text-purple-600" : "fa-regular"; 
-            
-            const attachmentHtml = post.attachment ? `<div class="mt-3 mb-3"><img src="${post.attachment}" class="rounded-lg max-h-[400px] w-full object-cover border border-slate-200"></div>` : '';
-            
-            const isAuthor = currentUser && post.uid === currentUser.uid;
-            const menuItems = isAuthor 
-                ? `<button onclick="editPost('${post.id}')" class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md"><i class="fa-solid fa-pen mr-2"></i>Edit</button>
-                   <button onclick="deletePost('${post.id}')" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md"><i class="fa-solid fa-trash mr-2"></i>Delete</button>`
-                : `<button onclick="reportPost('${post.id}')" class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md"><i class="fa-solid fa-flag mr-2"></i>Report</button>`;
+        window.toggleAudio = () => {
+            if(localStream) {
+                const audioTrack = localStream.getAudioTracks()[0];
+                audioTrack.enabled = !audioTrack.enabled;
+                document.getElementById('btn-toggle-mic').classList.toggle('bg-red-500');
+                document.getElementById('btn-toggle-mic').classList.toggle('bg-slate-700');
+            }
+        };
 
-            return `
-            <div class="glass-card rounded-xl p-4 animate-fade-in mb-4 bg-white" id="post-${post.id}-${context}">
-                <div class="flex justify-between items-start mb-3">
-                    <div class="flex gap-3">
-                        <img onclick="viewProfile('${post.uid}')" src="${post.authorPhoto}" class="w-10 h-10 rounded-full object-cover shadow-sm cursor-pointer" onerror="this.src='${defaultAvatar}'">
-                        <div>
-                            <h4 onclick="viewProfile('${post.uid}')" class="font-bold text-slate-800 text-sm flex items-center gap-2 cursor-pointer hover:underline">
-                                ${post.author}
-                                ${isProject ? '<span class="text-blue-600 text-[10px] border border-blue-200 px-1.5 rounded font-bold uppercase">Project</span>' : ''}
-                            </h4>
-                            <p class="text-xs text-slate-400">Just now</p>
-                        </div>
-                    </div>
-                    <div class="relative group">
-                        <button onclick="toggleMenu('${post.id}', '${context}')" class="text-slate-400 hover:bg-slate-100 w-8 h-8 rounded-full transition-colors"><i class="fa-solid fa-ellipsis"></i></button>
-                        <div id="menu-${post.id}-${context}" class="hidden absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-xl border border-slate-100 z-20 p-1">
-                            ${menuItems}
-                        </div>
-                    </div>
-                </div>
-                <div class="text-slate-800 text-[15px] leading-relaxed mb-3 whitespace-pre-line">${post.text}</div>
-                ${attachmentHtml}
-                ${isProject ? `<div class="flex flex-wrap gap-2 mb-4">${tags}</div>` : ''}
-                <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-slate-500 text-sm font-semibold">
-                    <button onclick="toggleLike('${post.id}')" class="flex-1 py-2 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 ${likeTextClass}">
-                        <i class="${likeIconClass} fa-thumbs-up text-lg"></i> <span>${post.likes || 0}</span>
-                    </button>
-                    <button onclick="toggleComments('${post.id}', '${context}')" class="flex-1 py-2 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
-                        <i class="fa-regular fa-comment text-lg"></i>
-                    </button>
-                    <button onclick="toggleSavePost('${post.id}')" class="flex-1 py-2 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2" title="Save">
-                        <i class="${saveIconClass} fa-bookmark text-lg"></i>
-                    </button>
-                    <button onclick="sharePost('${post.id}')" class="flex-1 py-2 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-share text-lg"></i>
-                    </button>
-                </div>
-                <div id="comments-${post.id}-${context}" class="hidden mt-3 pt-3 border-t border-slate-100">
-                    <div id="comments-list-${post.id}-${context}" class="space-y-2 mb-3 max-h-40 overflow-y-auto custom-scrollbar"></div>
-                    <div class="flex gap-2 items-center">
-                         <img src="${document.getElementById('nav-avatar').src}" class="w-8 h-8 rounded-full">
-                        <div class="flex-grow bg-slate-100 rounded-full px-3 py-1.5 flex items-center">
-                            <input type="text" id="comment-input-${post.id}-${context}" placeholder="Write a comment..." class="bg-transparent w-full text-sm outline-none" onkeydown="if(event.key==='Enter') submitComment('${post.id}', '${context}')">
-                            <button onclick="submitComment('${post.id}', '${context}')" class="text-blue-600 ml-2"><i class="fa-solid fa-paper-plane"></i></button>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-        }
+        window.toggleVideo = () => {
+             if(localStream) {
+                const videoTrack = localStream.getVideoTracks()[0];
+                videoTrack.enabled = !videoTrack.enabled;
+                document.getElementById('btn-toggle-cam').classList.toggle('bg-red-500');
+                document.getElementById('btn-toggle-cam').classList.toggle('bg-slate-700');
+            }
+        };
+
+        // --- Standard App Functions ---
 
         function loadData() {
             if (!currentUser) return;
-            if (unsubscribePosts) unsubscribePosts(); 
+            
+            // Posts
+            if (unsubscribePosts) unsubscribePosts();
             const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'posts'));
             unsubscribePosts = onSnapshot(q, (snap) => {
                 const posts = [];
                 snap.forEach(d => posts.push({id: d.id, ...d.data()}));
                 posts.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
                 allPostsCache = posts;
-                renderFeed(posts); 
-                if (window.currentProfileUid && !document.getElementById('view-profile').classList.contains('hidden')) {
-                    refreshProfilePosts(window.currentProfileUid);
+                if(!document.getElementById('view-feed').classList.contains('hidden')) renderFeed(posts);
+            });
+
+            // Users Cache
+            getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'users_directory')).then(s => {
+                const u = []; s.forEach(d => u.push({id: d.id, ...d.data()}));
+                allUsersCache = u;
+                renderNetwork(u);
+            });
+
+            // User Profile Data
+            onSnapshot(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'main'), (doc) => {
+                if(doc.exists()) {
+                    const d = doc.data();
+                    mySavedPosts = d.savedPosts || [];
+                    updateUI(d);
+                    if(allPostsCache.length) renderFeed(allPostsCache);
+                    if(!document.getElementById('view-saved').classList.contains('hidden')) renderSavedPosts();
+                } else {
+                    // Fallback UI update if doc is slow to create
+                    updateUI({});
                 }
-                if (!document.getElementById('view-saved').classList.contains('hidden')) renderSavedPosts();
             });
-            loadNetwork();
+
+            // Start Listeners
+            monitorNotifications();
+            monitorChats();
+            monitorIncomingCalls(); 
         }
 
-        async function loadNetwork() {
-            if(unsubscribeUsers) unsubscribeUsers();
-            const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'users_directory'));
-            unsubscribeUsers = onSnapshot(q, (snap) => {
-                const users = [];
-                snap.forEach(d => { 
-                    if(d.id !== currentUser.uid) {
-                        const data = d.data();
-                        if ((data.name||"").toLowerCase() !== 'member') users.push({id: d.id, ...data});
-                    }
+        function monitorNotifications() {
+            if(unsubscribeNotifications) unsubscribeNotifications();
+            const q = query(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'notifications'), orderBy('createdAt', 'desc'));
+            unsubscribeNotifications = onSnapshot(q, (snap) => {
+                allNotifications = [];
+                let unreadCount = 0;
+                snap.forEach(d => {
+                    const n = {id: d.id, ...d.data()};
+                    allNotifications.push(n);
+                    if(!n.read) unreadCount++;
                 });
-                allUsersCache = users;
-                renderNetwork(users);
-                renderChatList(users);
+                const badge = document.getElementById('notification-badge');
+                if(unreadCount > 0) {
+                    badge.style.display = 'block';
+                } else {
+                    badge.style.display = 'none';
+                }
+                renderNotificationsList();
             });
         }
-
-        // --- SEARCH FEATURE ---
-        window.handleSearch = (query) => {
-            const dropdown = document.getElementById('search-dropdown');
-            if (!query.trim()) {
-                dropdown.classList.add('hidden');
-                return;
-            }
-            const q = query.toLowerCase();
-
-            // Filter Users
-            const matchedUsers = allUsersCache.filter(u => 
-                (u.name || "").toLowerCase().includes(q)
-            ).slice(0, 5); // Limit to 5
-
-            // Filter Posts
-            const matchedPosts = allPostsCache.filter(p => 
-                (p.text || "").toLowerCase().includes(q)
-            ).slice(0, 5);
-
-            if (matchedUsers.length === 0 && matchedPosts.length === 0) {
-                 dropdown.innerHTML = '<div class="p-3 text-sm text-slate-500 text-center">No results found.</div>';
-                 dropdown.classList.remove('hidden');
+        
+        function renderNotificationsList() {
+            const list = document.getElementById('notification-list');
+            if(allNotifications.length === 0) {
+                 list.innerHTML = `<p class="text-center text-xs text-slate-400 py-4">No new notifications.</p>`;
                  return;
             }
-
-            let html = '';
-
-            // Users Section
-            if (matchedUsers.length > 0) {
-                html += '<div class="px-3 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">People</div>';
-                matchedUsers.forEach(u => {
-                    html += `
-                        <div onclick="viewProfile('${u.id}'); document.getElementById('search-dropdown').classList.add('hidden')" class="flex items-center gap-3 p-2 hover:bg-slate-50 cursor-pointer rounded-lg transition-colors">
-                            <img src="${u.photoURL || defaultAvatar}" class="w-8 h-8 rounded-full object-cover">
-                            <div class="text-sm font-bold text-slate-700">${u.name}</div>
-                        </div>
-                    `;
-                });
-            }
-
-            // Posts Section
-            if (matchedPosts.length > 0) {
-                 if (matchedUsers.length > 0) html += '<div class="border-t border-slate-100 my-1"></div>';
-                 html += '<div class="px-3 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Posts</div>';
-                 matchedPosts.forEach(p => {
-                     html += `
-                        <div onclick="router('feed'); renderFeed(allPostsCache.filter(x => x.id === '${p.id}')); document.getElementById('search-dropdown').classList.add('hidden')" class="flex items-center gap-3 p-2 hover:bg-slate-50 cursor-pointer rounded-lg transition-colors">
-                            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 flex-shrink-0"><i class="fa-regular fa-message"></i></div>
-                            <div class="truncate text-sm text-slate-600 font-medium">${p.text}</div>
-                        </div>
-                     `;
-                 });
-            }
-
-            dropdown.innerHTML = html;
-            dropdown.classList.remove('hidden');
-        };
-
-        // Helper for HTML OnClick
-        window.viewMyProfile = () => {
-             if(currentUser) viewProfile(currentUser.uid);
-             else showToast("Please wait, loading...");
-        };
-
-        window.viewProfile = async (uid) => {
-            if(!uid) return;
-            window.currentProfileUid = uid;
-            
-            // 1. Find User Data (Check cache first, then Firestore)
-            let user = allUsersCache.find(u => u.id === uid);
-            
-            // If viewing self or user not in cache, fetch fresh
-            if (!user || uid === currentUser.uid) {
-                try {
-                    // Try main profile doc
-                    let userDoc = await getDoc(doc(db, 'artifacts', appId, 'users', uid, 'profile', 'main'));
-                    if (userDoc.exists()) {
-                        user = { id: uid, ...userDoc.data() };
-                    } else {
-                        // Fallback to directory
-                        userDoc = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', uid));
-                        if(userDoc.exists()) user = { id: uid, ...userDoc.data() };
-                    }
-                } catch(e) { console.log("Error fetching user", e); }
-            }
-            
-            // 2. Switch View (Do this even if user object incomplete to show skeleton)
-            router('profile');
-
-            if (!user) {
-                // Fallback display if fetch fails
-                user = { name: "Unknown User", headline: "Profile not found", bio: "", photoURL: defaultAvatar };
-            }
-
-            // 3. Populate UI Elements
-            document.getElementById('profile-page-name').innerText = user.name || "User";
-            document.getElementById('profile-page-headline').innerText = user.headline || 'Member';
-            
-            // Handle Bio (Short and Long)
-            const bioText = user.bio || "No bio available.";
-            document.getElementById('profile-page-bio').innerText = bioText;
-            document.getElementById('profile-full-bio').innerText = bioText;
-            
-            document.getElementById('profile-page-avatar').src = user.photoURL || defaultAvatar;
-            
-            const joinDate = user.createdAt ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : "Unknown";
-            document.getElementById('profile-join-date').innerText = joinDate;
-
-            // 4. Handle Buttons (Edit vs Follow)
-            const editBtn = document.getElementById('edit-profile-btn');
-            const followBtn = document.getElementById('follow-btn');
-            const chatBtn = document.getElementById('profile-chat-btn');
-            const savedTab = document.getElementById('tab-saved');
-
-            if (uid === currentUser.uid) {
-                // Viewing Own Profile
-                editBtn.classList.remove('hidden');
-                editBtn.classList.add('flex'); 
+            list.innerHTML = allNotifications.map(n => {
+                let content = '';
+                let icon = 'fa-user';
+                let iconColor = 'text-blue-500';
+                if(n.type === 'like') { content = `liked your post.`; icon = 'fa-heart'; iconColor = 'text-red-500'; }
+                else if(n.type === 'comment') { content = `commented on your post.`; icon = 'fa-comment'; }
+                else if(n.type === 'follow') { content = `started following you.`; icon = 'fa-user-plus'; }
+                else if(n.type === 'mention') { content = `mentioned you in a post.`; icon = 'fa-at'; iconColor = 'text-purple-500'; }
                 
-                savedTab.classList.remove('hidden');
-                
-                followBtn.classList.add('hidden');
-                followBtn.classList.remove('flex');
-                
-                chatBtn.classList.add('hidden');
-                chatBtn.classList.remove('flex');
-                
-                // Pre-fill Edit Modal Inputs
-                document.getElementById('edit-headline').value = user.headline || "";
-                document.getElementById('edit-bio').value = user.bio || "";
-            } else {
-                // Viewing Others
-                editBtn.classList.add('hidden');
-                editBtn.classList.remove('flex');
-                
-                savedTab.classList.add('hidden');
-                
-                followBtn.classList.remove('hidden');
-                followBtn.classList.add('flex');
-                
-                chatBtn.classList.remove('hidden');
-                chatBtn.classList.add('flex');
-                
-                chatBtn.onclick = () => initChat(uid, user.name, user.photoURL);
-                
-                // Check if I am already following them
-                const amIFollowing = user.followers && user.followers.includes(currentUser.uid);
-                updateFollowButton(followBtn, amIFollowing, uid);
-            }
-            
-            // 5. Load Content
-            switchProfileTab('posts'); 
-            refreshProfilePosts(uid);
-        };
-
-        window.switchProfileTab = (tab) => {
-            document.querySelectorAll('.profile-tab').forEach(el => el.classList.remove('active'));
-            document.getElementById(`tab-${tab}`).classList.add('active');
-            
-            document.getElementById('profile-content-posts').classList.add('hidden');
-            document.getElementById('profile-content-about').classList.add('hidden');
-            document.getElementById('profile-content-saved').classList.add('hidden');
-            
-            document.getElementById(`profile-content-${tab}`).classList.remove('hidden');
-            if(tab === 'saved') renderSavedPostsInProfile();
-        };
-
-        function refreshProfilePosts(uid) {
-            // Filter the global cache for posts where uid matches the profile being viewed
-            const userPosts = allPostsCache.filter(p => p.uid === uid);
-            const container = document.getElementById('profile-content-posts');
-            
-            if (userPosts.length === 0) {
-                container.innerHTML = `
-                    <div class="flex flex-col items-center justify-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                        <i class="fa-solid fa-camera text-3xl text-slate-300 mb-3"></i>
-                        <p class="text-slate-500 font-medium">No posts yet.</p>
-                    </div>`;
-            } else {
-                // Use the existing createPostHTML helper, passing 'profile' as context
-                container.innerHTML = userPosts.map(post => createPostHTML(post, 'profile')).join('');
-            }
+                return `
+                <div class="flex items-start gap-3 p-2 hover:bg-slate-50 rounded-lg cursor-pointer ${n.read ? 'opacity-60' : 'bg-blue-50/50'}" onclick="handleNotificationClick('${n.id}', '${n.type}', '${n.postId || ''}', '${n.fromUid}')">
+                    <div class="mt-1"><i class="fa-solid ${icon} ${iconColor}"></i></div>
+                    <div>
+                        <p class="text-sm text-slate-800"><span class="font-bold">${n.fromName || 'Someone'}</span> ${content}</p>
+                        <p class="text-[10px] text-slate-400 mt-1">${n.createdAt ? new Date(n.createdAt.seconds * 1000).toLocaleDateString() : ''}</p>
+                    </div>
+                </div>`;
+            }).join('');
         }
         
-        function renderSavedPostsInProfile() {
-             const container = document.getElementById('profile-content-saved');
-             const saved = allPostsCache.filter(p => mySavedPosts.includes(p.id));
-             if (saved.length === 0) {
-                container.innerHTML = `<div class="text-center py-10 text-slate-400 bg-slate-50 rounded-xl">No saved posts.</div>`;
-            } else {
-                container.innerHTML = saved.map(post => createPostHTML(post, 'profile-saved')).join('');
-            }
-        }
-
-        // --- MODALS (Settings & Profile) ---
-        window.openSettingsModal = () => {
-            document.getElementById('settings-modal').classList.remove('hidden');
-            document.getElementById('settings-modal').classList.add('flex');
-            document.getElementById('settings-username').value = document.getElementById('menu-name').innerText;
-        };
-        window.closeSettingsModal = () => {
-            document.getElementById('settings-modal').classList.add('hidden');
-            document.getElementById('settings-modal').classList.remove('flex');
+        window.handleNotificationClick = async (nid, type, postId, fromUid) => {
+             await updateDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'notifications', nid), { read: true });
+             if(type === 'like' || type === 'comment' || type === 'mention') {
+                 router('feed');
+                 setTimeout(() => {
+                     const postElement = document.getElementById(`post-${postId}-feed`);
+                     if (postElement) {
+                         postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                         postElement.classList.add('ring-2', 'ring-blue-400', 'ring-offset-2');
+                         setTimeout(() => { postElement.classList.remove('ring-2', 'ring-blue-400', 'ring-offset-2'); }, 2000);
+                     }
+                 }, 300);
+             } else if (type === 'follow') {
+                 viewProfile(fromUid);
+             }
         };
 
-        window.openEditProfileModal = () => {
-            document.getElementById('edit-profile-modal').classList.remove('hidden');
-            document.getElementById('edit-profile-modal').classList.add('flex');
-        };
-        window.closeEditProfileModal = () => {
-            document.getElementById('edit-profile-modal').classList.add('hidden');
-            document.getElementById('edit-profile-modal').classList.remove('flex');
-        };
-
-        window.handlePfpChange = (input) => {
-            const file = input.files[0];
-            if (!file) return;
-            
-            // Limit size to ~1MB
-            if (file.size > 1024 * 1024) { 
-                alert("Image too large. Max 1MB"); 
-                return; 
-            }
-
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const newPic = e.target.result;
-                
-                // 1. Update Preview in Modal
-                document.getElementById('edit-modal-avatar').src = newPic; 
-                
-                try {
-                    // 2. Save to Database
-                    await updateDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'main'), { photoURL: newPic });
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', currentUser.uid), { photoURL: newPic });
-                    
-                    // 3. Update All Images on Screen Immediately
-                    document.getElementById('profile-page-avatar').src = newPic;
-                    document.getElementById('nav-avatar').src = newPic;
-                    document.getElementById('sidebar-mini-avatar').src = newPic;
-                    document.getElementById('composer-avatar').src = newPic;
-                    
-                    showToast("Profile picture updated!");
-                } catch (err) {
-                    console.error(err);
-                    alert("Error updating picture");
-                }
-            };
-            reader.readAsDataURL(file);
-        };
-
-        window.saveSettings = async () => {
-            const newName = document.getElementById('settings-username').value.trim();
-            if(!newName) return alert("Username cannot be empty.");
-            
-            try {
-                await updateProfile(currentUser, { displayName: newName });
-                await updateDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'main'), { name: newName });
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', currentUser.uid), { name: newName });
-                showToast('Settings saved!');
-                closeSettingsModal();
-            } catch(e) { alert("Error saving settings: " + e.message); }
-        };
-
-        window.resetPassword = async () => {
-            if(!currentUser.email) return alert("No email found.");
-            try {
-                await sendPasswordResetEmail(auth, currentUser.email);
-                alert(`Password reset email sent to ${currentUser.email}`);
-            } catch(e) { alert("Error: " + e.message); }
-        };
-
-        window.saveProfileData = async () => {
-            const headline = document.getElementById('edit-headline').value;
-            const bio = document.getElementById('edit-bio').value;
-            
-            const updates = { headline, bio };
-
-            try {
-                // 1. Update Firestore
-                await updateDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'main'), updates);
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', currentUser.uid), updates);
-                
-                // 2. Update UI Immediately (Client-side)
-                document.getElementById('profile-page-headline').innerText = headline;
-                document.getElementById('profile-page-bio').innerText = bio;
-                document.getElementById('profile-full-bio').innerText = bio;
-                
-                closeEditProfileModal();
-                showToast('Profile info updated!');
-            } catch (e) {
-                console.error("Error saving profile:", e);
-                alert("Failed to save profile.");
-            }
-        };
-
-        window.toggleSavePost = async (postId) => {
-            if (!currentUser) return;
-            const userRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'main');
-            try {
-                if (mySavedPosts.includes(postId)) {
-                    await updateDoc(userRef, { savedPosts: arrayRemove(postId) });
-                    showToast("Removed from Saved");
-                } else {
-                    await updateDoc(userRef, { savedPosts: arrayUnion(postId) });
-                    showToast("Post Saved");
-                }
-            } catch (e) { console.error(e); }
-        };
-        window.sharePost = (postId) => {
-                    const post = allPostsCache.find(p => p.id === postId);
-                    if (!post) return;
-
-                    // Use Web Share API if available (Mobile/Modern Browsers)
-                    if (navigator.share) {
-                        navigator.share({
-                            title: 'Lumini Post',
-                            text: post.text,
-                            url: window.location.href // currently shares the main page
-                        }).catch(console.error);
-                    } else {
-                        // Fallback for Desktop: Copy post text to clipboard
-                        navigator.clipboard.writeText(`${post.text} — on Lumini`).then(() => {
-                            showToast("Post copied to clipboard!");
-                        }).catch(() => {
-                            showToast("Unable to share");
-                        });
-                    }
-                };
-
-        function renderSavedPosts() {
-            const container = document.getElementById('saved-posts-stream');
-            const saved = allPostsCache.filter(p => mySavedPosts.includes(p.id));
-            if (saved.length === 0) {
-                container.innerHTML = `<div class="text-center py-10 text-slate-400 bg-white rounded-2xl border border-slate-100">No saved posts yet.</div>`;
-            } else {
-                container.innerHTML = saved.map(post => createPostHTML(post, 'saved')).join('');
-            }
-        }
-
-        function showToast(msg) {
-            const t = document.getElementById("toast");
-            t.innerText = msg; t.classList.add("show");
-            setTimeout(() => t.classList.remove("show"), 2000);
-        }
-
-        function updateFollowButton(btn, isFollowing, targetUid) {
-            btn.onclick = () => toggleFollow(targetUid, btn);
-            if (isFollowing) {
-                btn.innerHTML = `<i class="fa-solid fa-check"></i> Following`;
-                btn.className = "bg-slate-200 text-slate-700 px-6 py-2 rounded-lg font-bold text-sm hover:bg-slate-300 transition-all flex items-center gap-2";
-            } else {
-                btn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Follow`;
-                btn.className = "bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 transition-all shadow-md flex items-center gap-2";
-            }
-        }
-
-        window.toggleFollow = async (targetUid, btn) => {
-            if (!currentUser) return;
-            const targetRef = doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', targetUid);
-            const isFollowing = btn.innerText.includes("Following");
-            
-            try {
-                if(!isFollowing) {
-                    // Start Following
-                    await updateDoc(targetRef, { followers: arrayUnion(currentUser.uid) });
-                    // Add Notification to Target
-                    await addDoc(collection(db, 'artifacts', appId, 'users', targetUid, 'notifications'), {
-                        type: 'follow',
-                        fromUid: currentUser.uid,
-                        fromName: document.getElementById('menu-name').innerText,
-                        read: false,
-                        createdAt: serverTimestamp()
-                    });
-                    showToast("Followed user");
-                } else {
-                    // Unfollow
-                    await updateDoc(targetRef, { followers: arrayRemove(currentUser.uid) });
-                    showToast("Unfollowed user");
-                }
-                updateFollowButton(btn, !isFollowing, targetUid);
-            } catch (e) { console.error(e); }
-        };
-
-        function renderFeed(posts) {
-            const container = document.getElementById('feed-stream');
-            if(posts.length === 0) { container.innerHTML = `<div class="text-center py-10 text-slate-400 bg-white rounded-2xl border border-slate-100">No posts found.</div>`; return; }
-            container.innerHTML = posts.map(post => createPostHTML(post, 'feed')).join('');
-        }
-
-        function renderNetwork(users) {
-             const g = document.getElementById('network-grid');
-             if(!users.length) { g.innerHTML = `<p class="col-span-2 text-center text-slate-400">No users found.</p>`; return; }
-             g.innerHTML = users.map(u => `<div class="glass-card rounded-xl p-4 flex items-center gap-4 hover:border-blue-300 transition-colors"><img onclick="viewProfile('${u.id}')" src="${u.photoURL}" class="w-12 h-12 rounded-full bg-slate-100 object-cover cursor-pointer"><div class="flex-grow"><h4 onclick="viewProfile('${u.id}')" class="font-bold text-sm cursor-pointer hover:text-blue-600">${u.name}</h4><p class="text-xs text-slate-400">${u.headline||'Member'}</p></div><button onclick="initChat('${u.id}', '${u.name}', '${u.photoURL}')" class="text-blue-600 hover:bg-blue-50 p-2 rounded-full"><i class="fa-regular fa-comment-dots"></i></button></div>`).join('');
-        }
-        
-        function renderChatList(users) {
-                    // FILTER: Only show users with active conversations (chatId exists in allChatsCache)
-                    const activeConversations = users.filter(u => {
-                        const chatId = [currentUser.uid, u.id].sort().join('_');
-                        return allChatsCache.some(c => c.id === chatId);
-                    });
-                    
-                    // Sort by most recent activity
-                    activeConversations.sort((a, b) => {
-                        const chatA = allChatsCache.find(c => c.id === [currentUser.uid, a.id].sort().join('_'));
-                        const chatB = allChatsCache.find(c => c.id === [currentUser.uid, b.id].sort().join('_'));
-                        const timeA = chatA?.lastUpdated?.seconds || 0;
-                        const timeB = chatB?.lastUpdated?.seconds || 0;
-                        return timeB - timeA; // Most recent first
-                    });
-                    
-                    const container = document.getElementById('chat-list');
-                    
-                    // Show placeholder if no conversations exist
-                    if (activeConversations.length === 0) {
-                        container.innerHTML = `
-                            <div class="flex flex-col items-center justify-center py-8 px-4 text-center">
-                                <i class="fa-regular fa-comment-dots text-4xl text-slate-300 mb-3"></i>
-                                <p class="text-sm text-slate-500 font-medium mb-1">No conversations yet</p>
-                                <p class="text-xs text-slate-400">Visit Network to start chatting</p>
-                            </div>
-                        `;
-                        return;
-                    }
-                    
-                    // Render active conversations
-                    container.innerHTML = activeConversations.map(u => {
-                        const chatId = [currentUser.uid, u.id].sort().join('_');
-                        const chatData = allChatsCache.find(c => c.id === chatId);
-                        const isUnread = chatData ? chatData.isUnread : false;
-                        
-                        return `<div onclick="initChat('${u.id}', '${u.name}', '${u.photoURL}')" class="flex items-center gap-3 p-3 hover:bg-white rounded-xl cursor-pointer ${isUnread ? 'bg-blue-50' : ''}">
-                            <div class="relative">
-                                <img src="${u.photoURL}" class="w-10 h-10 rounded-full bg-slate-200 object-cover">
-                                ${isUnread ? '<div class="absolute top-0 right-0 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></div>' : ''}
-                            </div>
-                            <div class="truncate flex-grow">
-                                <h4 class="font-bold text-sm text-slate-800 ${isUnread ? 'text-black' : ''}">${u.name}</h4>
-                                ${isUnread ? '<p class="text-[10px] text-blue-600 font-bold">New message</p>' : ''}
-                            </div>
-                        </div>`;
-                    }).join('');
-                }
-
-        window.toggleMenu = (postId, context) => {
-            const menu = document.getElementById(`menu-${postId}-${context}`);
-            document.querySelectorAll(`[id^="menu-"][id$="-${context}"]`).forEach(el => { if(el.id !== `menu-${postId}-${context}`) el.classList.add('hidden') });
-            menu.classList.toggle('hidden');
-        };
-        window.deletePost = (postId) => {
-            postToDeleteId = postId;
-            document.getElementById('delete-modal').classList.remove('hidden');
-            setTimeout(() => {
-                document.getElementById('delete-modal').classList.remove('opacity-0');
-                document.getElementById('delete-modal').querySelector('div').classList.remove('scale-95');
-                document.getElementById('delete-modal').querySelector('div').classList.add('scale-100');
-            }, 10);
-        };
-        window.closeDeleteModal = () => {
-            const m = document.getElementById('delete-modal');
-            m.classList.add('opacity-0'); m.querySelector('div').classList.remove('scale-100'); m.querySelector('div').classList.add('scale-95');
-            setTimeout(() => { m.classList.add('hidden'); postToDeleteId = null; }, 300);
-        };
-        window.confirmDelete = async () => {
-            if (!postToDeleteId) return;
-            try {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', postToDeleteId));
-                showToast("Post Deleted");
-                closeDeleteModal();
-            } catch (e) { alert(e.message); closeDeleteModal(); }
-        };
-
-        window.toggleLike = async (postId) => {
-            const postRef = doc(db, 'artifacts', appId, 'public', 'data', 'posts', postId);
-            const post = allPostsCache.find(p => p.id === postId);
-            if(!post) return;
-            const liked = post.likedBy && post.likedBy.includes(currentUser.uid);
-            try { await updateDoc(postRef, { likes: increment(liked ? -1 : 1), likedBy: liked ? arrayRemove(currentUser.uid) : arrayUnion(currentUser.uid) }); } catch(e) { console.error(e); }
-        };
-
-        window.toggleComments = (postId, context) => {
-            const section = document.getElementById(`comments-${postId}-${context}`);
-            section.classList.toggle('hidden');
-            if(!section.classList.contains('hidden')) {
-                const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'posts', postId, 'comments'), orderBy('createdAt', 'asc'));
-                onSnapshot(q, (snap) => {
-                    const list = document.getElementById(`comments-list-${postId}-${context}`);
-                    if(list) {
-                        list.innerHTML = '';
-                        snap.forEach(d => {
-                            const c = d.data();
-                            list.innerHTML += `<div class="flex gap-2 text-sm mb-1"><span class="font-bold text-slate-800 text-xs">${c.author}:</span><span class="text-slate-600 text-xs">${c.text}</span></div>`;
-                        });
+        function monitorChats() {
+            if(unsubscribeChatList) unsubscribeChatList();
+            const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'chats'), orderBy('lastUpdated', 'desc'));
+            unsubscribeChatList = onSnapshot(q, (snap) => {
+                let hasUnread = false;
+                const chats = [];
+                snap.forEach(d => {
+                    const data = d.data();
+                    if(d.id.includes(currentUser.uid)) {
+                        chats.push({id: d.id, ...data});
+                        if(data.readBy && !data.readBy.includes(currentUser.uid)) hasUnread = true;
                     }
                 });
-            }
-        };
+                const badge = document.getElementById('chat-badge');
+                const mobileBadge = document.getElementById('mobile-chat-badge');
+                if(hasUnread) { badge.style.display = 'block'; mobileBadge.style.display = 'block'; }
+                else { badge.style.display = 'none'; mobileBadge.style.display = 'none'; }
+                renderChatList(chats);
+            });
+        }
 
-        window.submitComment = async (postId, context) => {
-            const input = document.getElementById(`comment-input-${postId}-${context}`);
-            if(!input.value.trim()) return;
-            try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'posts', postId, 'comments'), {
-                    text: input.value, author: document.getElementById('menu-name').innerText, uid: currentUser.uid, createdAt: serverTimestamp()
-                });
-                input.value = '';
-            } catch(e) { console.error(e); }
-        };
+        function renderChatList(chats) {
+            const container = document.getElementById('chat-list');
+            if(chats.length === 0) { container.innerHTML = '<p class="text-center text-xs text-slate-400 mt-4">No chats yet.</p>'; return; }
+            container.innerHTML = chats.map(c => {
+                const parts = c.id.split('_');
+                const otherUid = parts[0] === currentUser.uid ? parts[1] : parts[0];
+                const otherUser = allUsersCache.find(u => u.id === otherUid) || { name: "User", photoURL: "https://placehold.co/100x100" };
+                const isUnread = c.readBy && !c.readBy.includes(currentUser.uid);
+                return `<div onclick="openChat('${c.id}', '${otherUser.name}')" class="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-white transition-all ${c.id === currentChatId ? 'bg-white shadow-sm ring-1 ring-slate-100' : 'hover:shadow-sm'} ${isUnread ? 'bg-blue-50/50' : ''}">
+                    <div class="relative">
+                        <img src="${otherUser.photoURL}" class="w-10 h-10 rounded-full bg-slate-200 object-cover">
+                        ${isUnread ? '<div class="absolute top-0 right-0 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></div>' : ''}
+                    </div>
+                    <div class="truncate flex-grow">
+                        <h4 class="font-bold text-sm text-slate-800 ${isUnread ? 'text-black' : ''}">${otherUser.name}</h4>
+                        ${isUnread ? '<p class="text-[10px] text-blue-600 font-bold">New message</p>' : ''}
+                    </div>
+                </div>`;
+            }).join('');
+        }
 
-        window.editPost = (postId) => {
-            const post = allPostsCache.find(p => p.id === postId);
-            if (!post) return;
-            editModeId = postId; 
-            document.getElementById('post-input').value = post.text || "";
-            document.getElementById('post-type-select').value = post.type || "regular";
-            if(post.tags) document.getElementById('tags-input-field').value = post.tags.join(', ');
-            document.getElementById('modal-title').innerText = "Edit Post";
-            document.getElementById('post-submit-btn').innerText = "Save Changes";
-            openPostModal(post.type);
-        };
+        window.openChat = async (chatId, name) => {
+            currentChatId = chatId;
+            renderChatList([]); 
+            document.querySelector('#chat-header span').innerText = name;
+            document.getElementById('start-call-btn').classList.remove('hidden');
 
-        window.openPostModal = (type='regular') => {
-             const modal = document.getElementById('post-modal');
-             document.getElementById('post-type-select').value = type;
-             const tags = document.getElementById('project-tags-input');
-             if (editModeId === null) { document.getElementById('modal-title').innerText = "Create Post"; document.getElementById('post-submit-btn').innerText = "Post"; }
-             tags.classList.toggle('hidden', type !== 'project');
-             modal.classList.remove('hidden'); modal.classList.add('flex');
-        };
-        window.closePostModal = () => {
-            document.getElementById('post-modal').classList.add('hidden');
-            document.getElementById('post-input').value = '';
-            editModeId = null; 
-            currentAttachment = null;
-            window.taggedUsers = []; // Clear tagged users
-            document.getElementById('attachment-preview').classList.add('hidden');
-            document.getElementById('tag-picker').classList.add('hidden');
-            document.getElementById('emoji-picker').classList.add('hidden');
-        };
-        window.handleFileSelect = (input) => {
-            const file = input.files[0];
-            if (file && file.size < 500*1024) {
-                const r = new FileReader();
-                r.onload = (e) => { currentAttachment = e.target.result; document.getElementById('preview-img').src = e.target.result; document.getElementById('attachment-preview').classList.remove('hidden'); };
-                r.readAsDataURL(file);
-            } else { alert("File too large (max 500KB)"); }
-        };
-        window.clearAttachment = () => { currentAttachment = null; document.getElementById('attachment-preview').classList.add('hidden'); document.getElementById('file-input').value = ''; };
-        window.toggleEmojiPicker = () => {
-                    document.getElementById('emoji-picker').classList.toggle('hidden');
-                    document.getElementById('tag-picker').classList.add('hidden');
-                };
-                window.toggleTagPicker = () => {
-                    const picker = document.getElementById('tag-picker');
-                    picker.classList.toggle('hidden');
-                    document.getElementById('emoji-picker').classList.add('hidden');
-                    if (!picker.classList.contains('hidden')) {
-                        renderTagList(allUsersCache);
-                    }
-                };
-                
-                function renderTagList(users) {
-                    const list = document.getElementById('tag-list');
-                    if (users.length === 0) {
-                        list.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">No users found</p>';
-                        return;
-                    }
-                    list.innerHTML = users.map(u => `
-                        <div onclick="insertTag('${u.name}', '${u.id}')" class="flex items-center gap-3 p-2 hover:bg-slate-50 cursor-pointer rounded-lg transition-colors">
-                            <img src="${u.photoURL || defaultAvatar}" class="w-8 h-8 rounded-full object-cover">
-                            <div>
-                                <p class="text-sm font-bold text-slate-800">${u.name}</p>
-                                <p class="text-xs text-slate-400">${u.headline || 'Member'}</p>
-                            </div>
-                        </div>
-                    `).join('');
-                }
-                
-                window.filterTagList = (query) => {
-                    if (!query.trim()) {
-                        renderTagList(allUsersCache);
-                        return;
-                    }
-                    const filtered = allUsersCache.filter(u => 
-                        (u.name || "").toLowerCase().includes(query.toLowerCase())
-                    );
-                    renderTagList(filtered);
-                };
-                
-                window.insertTag = (name, uid) => {
-                    const input = document.getElementById('post-input');
-                    const currentText = input.value;
-                    input.value = currentText + (currentText ? ' ' : '') + `@${name} `;
-                    
-                    // Store tagged user for notification later
-                    if (!window.taggedUsers) window.taggedUsers = [];
-                    if (!window.taggedUsers.some(t => t.uid === uid)) {
-                        window.taggedUsers.push({ uid, name });
-                    }
-                    
-                    document.getElementById('tag-picker').classList.add('hidden');
-                    input.focus();
-                };
-                
-                window.insertEmoji = (e) => { 
-                    document.getElementById('post-input').value += e; 
-                    document.getElementById('emoji-picker').classList.add('hidden'); 
-                };
-        
-window.submitPost = async () => {
-            const text = document.getElementById('post-input').value;
-            if(!text.trim() && !currentAttachment) return;
-            const type = document.getElementById('post-type-select').value;
-            const tags = document.getElementById('tags-input-field').value.split(',').map(t=>t.trim()).filter(t=>t);
-            
-            // Extract mentioned users from text using @name pattern
-            const mentionedUsers = window.taggedUsers || [];
-            
-            const data = { 
-                uid: currentUser.uid, 
-                author: document.getElementById('menu-name').innerText, 
-                authorPhoto: document.getElementById('nav-avatar').src, 
-                text, 
-                type, 
-                tags, 
-                likes:0, 
-                likedBy:[], 
-                createdAt: serverTimestamp(), 
-                attachment: currentAttachment,
-                mentions: mentionedUsers.map(u => u.uid) // Store UIDs of mentioned users
-            };
-            
-            try {
-                if (editModeId) { 
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', editModeId), {text, type, tags}); 
-                } else { 
-                    const postRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'posts'), data);
-                    
-                    // Send notifications to tagged users
-                    for (const user of mentionedUsers) {
-                        try {
-                            await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'notifications'), {
-                                type: 'mention',
-                                postId: postRef.id,
-                                fromUid: currentUser.uid,
-                                fromName: document.getElementById('menu-name').innerText,
-                                fromPhoto: document.getElementById('nav-avatar').src,
-                                text: text.substring(0, 100) + (text.length > 100 ? '...' : ''), // Preview
-                                read: false,
-                                createdAt: serverTimestamp()
-                            });
-                        } catch(e) { console.error("Error sending notification:", e); }
-                    }
-                }
-                
-                // Reset tagged users
-                window.taggedUsers = [];
-                closePostModal();
-            } catch(e) { console.error(e); }
-        };
+            const input = document.getElementById('message-input');
+            const btn = document.getElementById('message-send-btn');
+            input.disabled = false;
+            btn.disabled = false;
+            input.focus();
 
-        window.router = (view) => {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`view-${view}`).classList.remove('hidden');
-            document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
-            const activeLink = document.getElementById(`nav-link-${view.replace('view-','')}`);
-            if(activeLink) activeLink.classList.add('active');
-            if (view === 'saved') renderSavedPosts();
-            if(view !== 'profile') window.currentProfileUid = null;
-        };
-        window.toggleProfileMenu = () => document.getElementById('profile-menu').classList.toggle('hidden');
-        
-        window.initChat = async (uid, name, photo) => {
-            currentChatId = [currentUser.uid, uid].sort().join('_');
-            
-            // Mark as read immediately when opening
-            try {
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'chats', currentChatId), {
-                    readBy: arrayUnion(currentUser.uid),
-                    lastUpdated: serverTimestamp() // just to ensure doc exists
-                }, { merge: true });
-            } catch(e) {}
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'chats', chatId), {
+                readBy: arrayUnion(currentUser.uid)
+            }, { merge: true });
 
-            document.getElementById('chat-header').innerHTML = `<div class="flex items-center justify-between w-full"><div class="flex items-center gap-3"><img src="${photo}" class="w-8 h-8 rounded-full"><span class="font-bold text-sm">${name}</span></div><button onclick="deleteChat()" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button></div>`;
-            document.getElementById('message-input').disabled = false; document.getElementById('message-send-btn').disabled = false;
-            
-            if(unsubscribeChat) unsubscribeChat();
-            const c = document.getElementById('chat-messages');
-            unsubscribeChat = onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'chats', currentChatId, 'messages'), orderBy('createdAt', 'asc')), (snap) => {
-                c.innerHTML = `<div class="text-center text-xs text-slate-300 mb-4 mt-2">Conversation started</div>`;
+            if(unsubscribeMessages) unsubscribeMessages();
+            const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'chats', chatId, 'messages'), orderBy('createdAt', 'asc'));
+            unsubscribeMessages = onSnapshot(q, (snap) => {
+                const c = document.getElementById('chat-messages');
+                c.innerHTML = '';
                 snap.forEach(d => {
                     const m = d.data();
                     const me = m.senderId === currentUser.uid;
@@ -1507,28 +1003,447 @@ window.submitPost = async () => {
             });
             router('messaging');
         };
-        window.deleteChat = async () => {
-            if(!confirm("Delete conversation?")) return;
-            const s = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'chats', currentChatId, 'messages'));
-            s.docs.forEach(d => deleteDoc(d.ref));
-        };
+
         window.sendMessage = async (e) => {
             e.preventDefault(); const i = document.getElementById('message-input'); if(!i.value.trim()) return;
-            
-            // Send Message
             await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'chats', currentChatId, 'messages'), { text: i.value, senderId: currentUser.uid, createdAt: serverTimestamp() });
-            
-            // Update Chat Metadata for Notifications
             await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'chats', currentChatId), {
                 lastUpdated: serverTimestamp(),
-                // Read by sender, NOT read by others yet. We overwrite the array to just [me]
                 readBy: [currentUser.uid]
             }, { merge: true });
-
             i.value = '';
         };
+
+        // --- Router & UI Helpers ---
+
+        window.router = (view) => {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${view}`).classList.remove('hidden');
+            document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+            const navLink = document.getElementById(`nav-link-${view}`);
+            if(navLink) navLink.classList.add('active');
+            window.scrollTo(0,0);
+        };
         
-        router('feed');
+        window.handleGoogleAuth = () => {
+             const provider = new GoogleAuthProvider();
+             signInWithPopup(auth, provider).catch(e => document.getElementById('auth-error').innerText = e.message);
+        };
+        
+        window.handleEmailAuth = async () => {
+             const email = document.getElementById('auth-email').value;
+             const pass = document.getElementById('auth-password').value;
+             try {
+                 await signInWithEmailAndPassword(auth, email, pass);
+             } catch(e) {
+                 try {
+                     await createUserWithEmailAndPassword(auth, email, pass);
+                 } catch(err) {
+                     document.getElementById('auth-error').innerText = err.message;
+                     document.getElementById('auth-error').classList.remove('hidden');
+                 }
+             }
+        };
+
+        window.handleSignOut = () => signOut(auth);
+
+        // Updated to use current user fallback
+        function updateUI(data) {
+             const user = currentUser;
+             // Prefer data from DB, fallback to Auth object, fallback to Defaults
+             const name = data.name || user.displayName || user.email.split('@')[0] || "User";
+             const pic = data.photoURL || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
+             const headline = data.headline || "New Member";
+
+             document.getElementById('nav-avatar').src = pic;
+             document.getElementById('sidebar-mini-avatar').src = pic;
+             document.getElementById('menu-avatar-small').src = pic;
+             document.getElementById('composer-avatar').src = pic;
+             document.getElementById('modal-avatar').src = pic;
+             
+             document.getElementById('sidebar-mini-name').innerText = name;
+             document.getElementById('menu-name').innerText = name;
+             document.getElementById('composer-name-placeholder').innerText = name.split(' ')[0];
+             
+             // Sync inputs
+             document.getElementById('settings-username').value = name;
+             document.getElementById('edit-headline').value = headline;
+             document.getElementById('edit-bio').value = data.bio || "";
+             document.getElementById('edit-modal-avatar').src = pic;
+        }
+
+        // --- Post Rendering Logic ---
+        
+        function createPostHTML(post, context) {
+            const isProject = post.type === 'project';
+            const tags = post.tags ? post.tags.map(t => `<span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md">#${t}</span>`).join('') : '';
+            const hasLiked = post.likedBy && post.likedBy.includes(currentUser.uid);
+            const isSaved = mySavedPosts.includes(post.id);
+            const likeIconClass = hasLiked ? "fa-solid text-blue-600" : "fa-regular";
+            const saveIconClass = isSaved ? "fa-solid text-purple-600" : "fa-regular";
+            
+            return `<div id="post-${post.id}-${context}" class="glass-card rounded-2xl bg-white p-0 overflow-hidden animate-fade-in mb-4">
+                <div class="p-4 flex gap-3">
+                    <img src="${post.photoURL}" class="w-10 h-10 rounded-full bg-slate-100 object-cover cursor-pointer" onclick="viewProfile('${post.uid}')">
+                    <div class="flex-grow">
+                        <div class="flex justify-between items-start">
+                            <div><h4 class="font-bold text-slate-800 text-sm hover:underline cursor-pointer" onclick="viewProfile('${post.uid}')">${post.name}</h4><p class="text-xs text-slate-400">${post.headline || 'Member'}</p></div>
+                            <div class="relative">
+                                <button onclick="toggleMenu('${post.id}', '${context}')" class="text-slate-400 hover:bg-slate-100 w-8 h-8 rounded-full"><i class="fa-solid fa-ellipsis"></i></button>
+                                <div id="menu-${post.id}-${context}" class="hidden absolute right-0 top-8 bg-white shadow-xl border border-slate-100 rounded-xl py-2 w-32 z-10">
+                                    <button onclick="savePost('${post.id}')" class="w-full text-left px-4 py-2 text-slate-600 hover:bg-slate-50 text-sm font-medium">${isSaved ? 'Unsave' : 'Save'}</button>
+                                    ${currentUser.uid === post.uid ? `<button onclick="deletePost('${post.id}')" class="w-full text-left px-4 py-2 text-red-500 hover:bg-red-50 text-sm font-bold">Delete</button>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-4 pb-2">
+                    ${isProject ? '<span class="inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded-full mb-2"><i class="fa-solid fa-rocket mr-1"></i> PROJECT</span>' : ''}
+                    <p class="text-slate-700 text-sm whitespace-pre-line leading-relaxed">${post.text}</p>
+                    <div class="mt-2 flex flex-wrap gap-2">${tags}</div>
+                </div>
+                ${post.attachment ? `<div class="mt-2"><img src="${post.attachment}" class="w-full object-cover max-h-[500px] bg-slate-50"></div>` : ''}
+                <div class="px-4 py-3 border-t border-slate-100 flex gap-1">
+                    <button onclick="toggleLike('${post.id}')" class="flex-1 py-2 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 text-slate-500 font-medium text-sm"><i class="${likeIconClass} fa-heart text-lg"></i> <span class="${hasLiked ? 'text-blue-600' : ''}">${post.likes || 0}</span></button>
+                    <button onclick="toggleCommentSection('${post.id}', '${context}')" class="flex-1 py-2 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 text-slate-500 font-medium text-sm"><i class="fa-regular fa-comment text-lg"></i></button>
+                    <button onclick="savePost('${post.id}')" class="flex-1 py-2 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 text-slate-500 font-medium text-sm"><i class="${saveIconClass} fa-bookmark text-lg"></i></button>
+                </div>
+                 <div id="comments-${post.id}-${context}" class="hidden mt-0 bg-slate-50/50 p-4 border-t border-slate-100">
+                    <div id="comments-list-${post.id}-${context}" class="space-y-3 mb-3 max-h-60 overflow-y-auto custom-scrollbar"></div>
+                    <div class="flex gap-2 items-center">
+                        <img src="${document.getElementById('nav-avatar').src}" class="w-8 h-8 rounded-full">
+                        <div class="flex-grow bg-white border border-slate-200 rounded-full px-4 py-2 flex items-center shadow-sm">
+                            <input type="text" id="comment-input-${post.id}-${context}" placeholder="Write a comment..." class="bg-transparent w-full text-sm outline-none" onkeydown="if(event.key==='Enter') submitComment('${post.id}', '${context}')">
+                            <button onclick="submitComment('${post.id}', '${context}')" class="text-blue-600 ml-2 hover:bg-blue-50 p-1 rounded-full"><i class="fa-solid fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        window.renderFeed = (posts) => {
+             const container = document.getElementById('feed-stream');
+             if(!posts.length) { container.innerHTML = `<div class="text-center py-12 text-slate-400">No posts yet.</div>`; return; }
+             container.innerHTML = posts.map(p => createPostHTML(p, 'feed')).join('');
+        };
+        
+        window.renderSavedPosts = () => {
+             const container = document.getElementById('saved-posts-stream');
+             const saved = allPostsCache.filter(p => mySavedPosts.includes(p.id));
+             if(!saved.length) { container.innerHTML = `<p class="text-center text-slate-400 py-8">No saved posts.</p>`; return; }
+             container.innerHTML = saved.map(p => createPostHTML(p, 'saved')).join('');
+        };
+
+        function renderNetwork(users) {
+            const g = document.getElementById('network-grid');
+            if(!users.length) { 
+                // Render at least current user if no one else
+                if(currentUser) {
+                     // small timeout to let directory populate
+                     g.innerHTML = `<p class="col-span-2 text-center text-slate-400">Initializing your network...</p>`;
+                     return;
+                }
+                g.innerHTML = `<p class="col-span-2 text-center text-slate-400">No users found.</p>`; 
+                return; 
+            }
+            g.innerHTML = users.map(u => `<div class="glass-card rounded-xl p-4 flex items-center gap-4 hover:border-blue-300 transition-colors cursor-pointer" onclick="startChat('${u.id}', '${u.name}')"><img src="${u.photoURL}" class="w-12 h-12 rounded-full bg-slate-100 object-cover"><div class="flex-grow"><h4 class="font-bold text-slate-800 text-sm">${u.name}</h4><p class="text-xs text-slate-500 truncate">${u.headline || 'Member'}</p></div><button class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100"><i class="fa-regular fa-comment-dots"></i></button></div>`).join('');
+        }
+
+        window.startChat = async (uid, name) => {
+            if(uid === currentUser.uid) return;
+            const chatId = [currentUser.uid, uid].sort().join('_');
+            const chatRef = doc(db, 'artifacts', appId, 'public', 'data', 'chats', chatId);
+            const chatSnap = await getDoc(chatRef);
+            
+            if(!chatSnap.exists()) {
+                await setDoc(chatRef, {
+                    createdAt: serverTimestamp(),
+                    lastUpdated: serverTimestamp(),
+                    participants: [currentUser.uid, uid],
+                    readBy: [currentUser.uid]
+                });
+            }
+            
+            openChat(chatId, name);
+        };
+
+        // --- Standard Actions (Like, Comment, Save) ---
+        
+        window.toggleLike = async (postId) => {
+             const postRef = doc(db, 'artifacts', appId, 'public', 'data', 'posts', postId);
+             const p = allPostsCache.find(x => x.id === postId);
+             if(!p) return;
+             const hasLiked = p.likedBy && p.likedBy.includes(currentUser.uid);
+             
+             if(hasLiked) {
+                 await updateDoc(postRef, { likes: increment(-1), likedBy: arrayRemove(currentUser.uid) });
+             } else {
+                 await updateDoc(postRef, { likes: increment(1), likedBy: arrayUnion(currentUser.uid) });
+                 if(p.uid !== currentUser.uid) {
+                      addDoc(collection(db, 'artifacts', appId, 'users', p.uid, 'notifications'), {
+                          type: 'like', postId: postId, fromUid: currentUser.uid, fromName: document.getElementById('menu-name').innerText, read: false, createdAt: serverTimestamp()
+                      });
+                 }
+             }
+        };
+
+        window.savePost = async (postId) => {
+             const userRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'main');
+             if(mySavedPosts.includes(postId)) {
+                 await updateDoc(userRef, { savedPosts: arrayRemove(postId) });
+             } else {
+                 await updateDoc(userRef, { savedPosts: arrayUnion(postId) });
+             }
+             const idx = mySavedPosts.indexOf(postId);
+             if(idx > -1) mySavedPosts.splice(idx, 1); else mySavedPosts.push(postId);
+             renderFeed(allPostsCache);
+             renderSavedPosts();
+        };
+
+        window.toggleMenu = (pid, ctx) => document.getElementById(`menu-${pid}-${ctx}`).classList.toggle('hidden');
+        
+        window.toggleCommentSection = (pid, ctx) => {
+            const el = document.getElementById(`comments-${pid}-${ctx}`);
+            el.classList.toggle('hidden');
+            if(!el.classList.contains('hidden')) loadComments(pid, ctx);
+        };
+
+        window.loadComments = (pid, ctx) => {
+            const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'posts', pid, 'comments'), orderBy('createdAt', 'asc'));
+            onSnapshot(q, (snap) => {
+                const list = document.getElementById(`comments-list-${pid}-${ctx}`);
+                list.innerHTML = '';
+                snap.forEach(d => {
+                    const c = d.data();
+                    list.innerHTML += `<div class="flex gap-2"><img src="${c.photoURL}" class="w-6 h-6 rounded-full mt-1"><div class="bg-white p-2 rounded-r-xl rounded-bl-xl shadow-sm border border-slate-100 text-sm"><p class="font-bold text-xs text-slate-800">${c.name}</p><p class="text-slate-600">${c.text}</p></div></div>`;
+                });
+                list.scrollTop = list.scrollHeight;
+            });
+        };
+
+        window.submitComment = async (pid, ctx) => {
+            const inp = document.getElementById(`comment-input-${pid}-${ctx}`);
+            if(!inp.value.trim()) return;
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'posts', pid, 'comments'), {
+                text: inp.value,
+                uid: currentUser.uid,
+                name: document.getElementById('menu-name').innerText,
+                photoURL: document.getElementById('nav-avatar').src,
+                createdAt: serverTimestamp()
+            });
+            const p = allPostsCache.find(x => x.id === pid);
+            if(p && p.uid !== currentUser.uid) {
+                 addDoc(collection(db, 'artifacts', appId, 'users', p.uid, 'notifications'), {
+                      type: 'comment', postId: pid, fromUid: currentUser.uid, fromName: document.getElementById('menu-name').innerText, read: false, createdAt: serverTimestamp()
+                 });
+            }
+            inp.value = '';
+        };
+
+        window.openPostModal = (type='regular') => {
+             document.getElementById('post-modal').classList.remove('hidden');
+             if(type === 'project') document.getElementById('post-type-select').value = 'project';
+             document.getElementById('post-input').focus();
+        };
+        window.closePostModal = () => document.getElementById('post-modal').classList.add('hidden');
+        
+        window.submitPost = async () => {
+             const text = document.getElementById('post-input').value;
+             const type = document.getElementById('post-type-select').value;
+             if(!text.trim() && !currentAttachment) return;
+             
+             closePostModal();
+             await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'posts'), {
+                 text: text,
+                 type: type,
+                 uid: currentUser.uid,
+                 name: document.getElementById('menu-name').innerText,
+                 photoURL: document.getElementById('nav-avatar').src,
+                 headline: document.getElementById('profile-page-headline').innerText,
+                 attachment: currentAttachment,
+                 tags: type==='project'? document.getElementById('tags-input').value.split(',').map(s=>s.trim().replace('#','')).filter(s=>s) : [],
+                 likes: 0,
+                 createdAt: serverTimestamp()
+             });
+             document.getElementById('post-input').value = '';
+             currentAttachment = null;
+             document.getElementById('attachment-preview').classList.add('hidden');
+        };
+
+        window.deletePost = (pid) => { postToDeleteId = pid; document.getElementById('delete-modal').classList.remove('hidden', 'opacity-0'); };
+        window.closeDeleteModal = () => { postToDeleteId = null; document.getElementById('delete-modal').classList.add('hidden', 'opacity-0'); };
+        window.confirmDelete = async () => {
+             if(postToDeleteId) {
+                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', postToDeleteId));
+             }
+             closeDeleteModal();
+        };
+
+        window.handleFileSelect = (input) => {
+             if(input.files && input.files[0]) {
+                 const reader = new FileReader();
+                 reader.onload = (e) => {
+                     currentAttachment = e.target.result;
+                     document.getElementById('preview-img').src = currentAttachment;
+                     document.getElementById('attachment-preview').classList.remove('hidden');
+                 };
+                 reader.readAsDataURL(input.files[0]);
+             }
+        };
+        
+        window.clearAttachment = () => {
+            currentAttachment = null;
+            document.getElementById('file-input').value = '';
+            document.getElementById('attachment-preview').classList.add('hidden');
+        };
+
+        window.viewMyProfile = () => { if(currentUser) viewProfile(currentUser.uid); };
+        window.viewProfile = async (uid) => {
+             let user = allUsersCache.find(u => u.id === uid);
+             if(!user && uid === currentUser.uid) user = { name: "Me", photoURL: document.getElementById('nav-avatar').src, headline: "My Headline" };
+             
+             document.getElementById('profile-page-name').innerText = user ? user.name : "User";
+             document.getElementById('profile-page-avatar').src = user ? user.photoURL : "https://placehold.co/100x100";
+             document.getElementById('profile-page-headline').innerText = user ? (user.headline || "") : "";
+             
+             if(uid === currentUser.uid) {
+                 document.getElementById('edit-profile-btn').classList.remove('hidden');
+                 document.getElementById('follow-btn').classList.add('hidden');
+                 document.getElementById('profile-chat-btn').classList.add('hidden');
+             } else {
+                 document.getElementById('edit-profile-btn').classList.add('hidden');
+                 document.getElementById('follow-btn').classList.remove('hidden');
+                 document.getElementById('profile-chat-btn').classList.remove('hidden');
+                 document.getElementById('profile-chat-btn').onclick = () => startChat(uid, user.name);
+             }
+             
+             const pDoc = await getDoc(doc(db, 'artifacts', appId, 'users', uid, 'profile', 'main'));
+             if(pDoc.exists()) {
+                 const d = pDoc.data();
+                 document.getElementById('profile-page-bio').innerText = d.bio || "No bio yet.";
+                 document.getElementById('profile-full-bio').innerText = d.bio || "No details available.";
+             }
+             
+             const userPosts = allPostsCache.filter(p => p.uid === uid);
+             document.getElementById('profile-content-posts').innerHTML = userPosts.length ? userPosts.map(p => createPostHTML(p, 'profile')).join('') : '<p class="text-center text-slate-400 py-8">No posts yet.</p>';
+             
+             router('profile');
+        };
+
+        window.openSettingsModal = () => document.getElementById('settings-modal').classList.remove('hidden');
+        window.closeSettingsModal = () => document.getElementById('settings-modal').classList.add('hidden');
+        
+        window.saveSettings = async () => {
+             const newName = document.getElementById('settings-username').value;
+             if(newName) {
+                 await updateProfile(currentUser, { displayName: newName });
+                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', currentUser.uid), {
+                     name: newName,
+                     photoURL: currentUser.photoURL,
+                     headline: document.getElementById('edit-headline').value
+                 }, { merge: true });
+                 location.reload();
+             }
+        };
+
+        window.openEditProfileModal = () => document.getElementById('edit-profile-modal').classList.remove('hidden');
+        window.closeEditProfileModal = () => document.getElementById('edit-profile-modal').classList.add('hidden');
+        
+        window.saveProfileData = async () => {
+             const headline = document.getElementById('edit-headline').value;
+             const bio = document.getElementById('edit-bio').value;
+             
+             await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'main'), {
+                 headline, bio, savedPosts: mySavedPosts
+             }, { merge: true });
+             
+             await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', currentUser.uid), {
+                 name: currentUser.displayName,
+                 photoURL: currentUser.photoURL,
+                 headline: headline
+             }, { merge: true });
+             
+             closeEditProfileModal();
+             viewMyProfile();
+        };
+
+        window.handlePfpChange = (input) => {
+             if(input.files && input.files[0]) {
+                 const reader = new FileReader();
+                 reader.onload = async (e) => {
+                     const dataUrl = e.target.result;
+                     await updateProfile(currentUser, { photoURL: dataUrl });
+                     await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', currentUser.uid), { photoURL: dataUrl }, { merge: true });
+                     document.getElementById('edit-modal-avatar').src = dataUrl;
+                 };
+                 reader.readAsDataURL(input.files[0]);
+             }
+        };
+
+        window.switchProfileTab = (tab) => {
+             document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+             document.getElementById(`tab-${tab}`).classList.add('active');
+             
+             if(tab === 'posts') {
+                 document.getElementById('profile-content-posts').classList.remove('hidden');
+                 document.getElementById('profile-content-about').classList.add('hidden');
+                 document.getElementById('profile-content-saved').classList.add('hidden');
+             } else if(tab === 'about') {
+                 document.getElementById('profile-content-posts').classList.add('hidden');
+                 document.getElementById('profile-content-about').classList.remove('hidden');
+                 document.getElementById('profile-content-saved').classList.add('hidden');
+             } else {
+                 document.getElementById('profile-content-posts').classList.add('hidden');
+                 document.getElementById('profile-content-about').classList.add('hidden');
+                 document.getElementById('profile-content-saved').classList.remove('hidden');
+             }
+        };
+        
+        window.toggleProfileMenu = () => document.getElementById('profile-menu').classList.toggle('hidden');
+        window.toggleNotificationDropdown = () => document.getElementById('notification-dropdown').classList.toggle('hidden');
+        
+        window.handleSearch = (val) => {
+             const dropdown = document.getElementById('search-dropdown');
+             if(!val.trim()) { dropdown.classList.add('hidden'); return; }
+             
+             const matches = allUsersCache.filter(u => u.name.toLowerCase().includes(val.toLowerCase()));
+             dropdown.classList.remove('hidden');
+             if(!matches.length) { dropdown.innerHTML = `<p class="p-4 text-xs text-slate-400">No users found.</p>`; return; }
+             
+             dropdown.innerHTML = matches.map(u => `<div onclick="viewProfile('${u.id}')" class="flex items-center gap-3 p-3 hover:bg-slate-50 cursor-pointer border-b border-slate-50"><img src="${u.photoURL}" class="w-8 h-8 rounded-full bg-slate-200"><span class="font-bold text-sm text-slate-700">${u.name}</span></div>`).join('');
+        };
+        
+        window.toggleEmojiPicker = () => document.getElementById('emoji-picker').classList.toggle('hidden');
+        window.insertEmoji = (e) => { document.getElementById('post-input').value += e; };
+        window.toggleTagPicker = () => {
+             const p = document.getElementById('tag-picker');
+             p.classList.toggle('hidden');
+             if(!p.classList.contains('hidden')) {
+                  document.getElementById('tag-list').innerHTML = `
+                  <div class="p-1 hover:bg-slate-50 cursor-pointer text-xs font-bold text-slate-600" onclick="addTag('javascript')">#javascript</div>
+                  <div class="p-1 hover:bg-slate-50 cursor-pointer text-xs font-bold text-slate-600" onclick="addTag('design')">#design</div>
+                  <div class="p-1 hover:bg-slate-50 cursor-pointer text-xs font-bold text-slate-600" onclick="addTag('react')">#react</div>
+                  <div class="p-1 hover:bg-slate-50 cursor-pointer text-xs font-bold text-slate-600" onclick="addTag('firebase')">#firebase</div>
+                  `;
+             }
+        };
+        window.addTag = (t) => {
+             const el = document.getElementById('post-type-select');
+             if(el.value !== 'project') { el.value = 'project'; document.getElementById('project-tags-input').classList.remove('hidden'); }
+             const i = document.getElementById('tags-input');
+             i.value = i.value ? i.value + ', ' + t : t;
+             document.getElementById('tag-picker').classList.add('hidden');
+        };
+
+        // Close menus on click outside
+        document.addEventListener('click', (e) => {
+            if(!e.target.closest('.relative')) {
+                document.getElementById('profile-menu').classList.add('hidden');
+                document.getElementById('notification-dropdown').classList.add('hidden');
+            }
+        });
+
     </script>
 </body>
 </html>
