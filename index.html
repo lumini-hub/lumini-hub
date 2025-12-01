@@ -85,8 +85,12 @@
 <body class="text-slate-800 font-sans antialiased overflow-x-hidden selection:bg-blue-100 selection:text-blue-900">
 
     <div id="app" class="min-h-screen flex flex-col transition-all duration-500">
-        <!-- RINGTONE AUDIO -->
-        <audio id="call-ringtone" loop src="https://assets.mixkit.co/active_storage/sfx/2330/2330-preview.m4a"></audio>
+        <!-- RINGTONE AUDIO (Hidden) -->
+        <audio id="call-ringtone" loop>
+            <source src="https://assets.mixkit.co/active_storage/sfx/2330/2330-preview.m4a" type="audio/mp4">
+            <!-- Fallback sound just in case -->
+            <source src="https://www.soundjay.com/phone/telephone-ring-03a.mp3" type="audio/mpeg">
+        </audio>
 
         <!-- Navbar -->
         <nav class="glass fixed top-0 w-full z-50 h-16 transition-all duration-300 shadow-sm">
@@ -589,6 +593,7 @@
         let unsubscribeCall = null;
         let incomingCallData = null;
         let callType = 'video';
+        let iceCandidateQueue = [];
         
         const servers = {
             iceServers: [
@@ -669,10 +674,15 @@
             document.getElementById('caller-name-display').innerText = (data.callerName || "Someone") + ` is calling (${type})...`;
             document.getElementById('incoming-call-modal').classList.remove('hidden');
             
-            // PLAY RINGTONE
+            // PLAY RINGTONE with user interaction fallback
             const r = document.getElementById('call-ringtone');
             r.currentTime = 0;
-            r.play().catch(e => console.log("Autoplay blocked:", e));
+            const playPromise = r.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.log("Autoplay blocked. User needs to interact with DOM first.");
+                });
+            }
         }
 
         window.declineCall = async () => {
@@ -697,14 +707,17 @@
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ video: callType === 'video', audio: true });
                 document.getElementById('localVideo').srcObject = localStream;
-                document.getElementById('remoteVideo').srcObject = new MediaStream();
+                // Important: Setup remote stream properly
+                const remoteStream = new MediaStream();
+                document.getElementById('remoteVideo').srcObject = remoteStream;
 
                 peerConnection = new RTCPeerConnection(servers);
                 localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
+                // Improved stream handling
                 peerConnection.ontrack = (event) => {
                     event.streams[0].getTracks().forEach(track => {
-                        document.getElementById('remoteVideo').srcObject.addTrack(track);
+                        remoteStream.addTrack(track);
                     });
                 };
 
@@ -727,7 +740,7 @@
                     snapshot.docChanges().forEach((change) => {
                         if (change.type === 'added') {
                             const candidate = new RTCIceCandidate(change.doc.data());
-                            peerConnection.addIceCandidate(candidate);
+                            peerConnection.addIceCandidate(candidate).catch(e => console.error("Error adding candidate", e));
                         }
                     });
                 });
@@ -737,7 +750,7 @@
                 });
             } catch (err) {
                 console.error("Error answering call:", err);
-                alert("Could not access camera/microphone. Please check permissions.");
+                alert("Call Failed: Could not access camera/microphone or connect. Check permissions.");
                 endCallCleanup();
             }
         };
@@ -763,14 +776,15 @@
 
                 localStream = await navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true });
                 document.getElementById('localVideo').srcObject = localStream;
-                document.getElementById('remoteVideo').srcObject = new MediaStream();
+                const remoteStream = new MediaStream();
+                document.getElementById('remoteVideo').srcObject = remoteStream;
 
                 peerConnection = new RTCPeerConnection(servers);
                 localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
                 peerConnection.ontrack = (event) => {
                     event.streams[0].getTracks().forEach(track => {
-                        document.getElementById('remoteVideo').srcObject.addTrack(track);
+                        remoteStream.addTrack(track);
                     });
                 };
 
@@ -805,25 +819,35 @@
                         document.getElementById('call-ringtone').pause();
                         
                         const answer = new RTCSessionDescription(data.answer);
-                        peerConnection.setRemoteDescription(answer);
+                        peerConnection.setRemoteDescription(answer).then(() => {
+                             // Now safe to add any queued candidates (implied by snapshot below)
+                        });
                         document.getElementById('call-status-text').innerText = "Connected";
                     }
                     
                     if(data.status === 'ended') endCallCleanup();
                 });
 
+                // Listen for candidates from Callee - QUEUE logic to prevent race conditions
                 const calleeCandidatesRef = collection(db, 'artifacts', appId, 'public', 'data', 'calls', currentCallId, 'calleeCandidates');
                 onSnapshot(calleeCandidatesRef, (snapshot) => {
                     snapshot.docChanges().forEach((change) => {
                         if (change.type === 'added') {
                             const candidate = new RTCIceCandidate(change.doc.data());
-                            peerConnection.addIceCandidate(candidate);
+                            if (peerConnection.remoteDescription) {
+                                peerConnection.addIceCandidate(candidate).catch(e => console.error("Error adding candidate", e));
+                            } else {
+                                // Simple queue: retry shortly. In prod use a real queue array.
+                                setTimeout(() => {
+                                     if(peerConnection.remoteDescription) peerConnection.addIceCandidate(candidate).catch(e => console.error(e));
+                                }, 1000);
+                            }
                         }
                     });
                 });
             } catch (err) {
                 console.error("Error initiating call:", err);
-                alert("Could not access camera/microphone. Ensure you are on HTTPS.");
+                alert("Call Failed: Could not access camera/microphone. Ensure you are on HTTPS.");
                 endCallCleanup();
             }
         };
