@@ -85,13 +85,7 @@
 <body class="text-slate-800 font-sans antialiased overflow-x-hidden selection:bg-blue-100 selection:text-blue-900">
 
     <div id="app" class="min-h-screen flex flex-col transition-all duration-500">
-        <!-- RINGTONE AUDIO (Hidden) -->
-        <audio id="call-ringtone" loop>
-            <source src="https://assets.mixkit.co/active_storage/sfx/2330/2330-preview.m4a" type="audio/mp4">
-            <!-- Fallback sound just in case -->
-            <source src="https://www.soundjay.com/phone/telephone-ring-03a.mp3" type="audio/mpeg">
-        </audio>
-
+        
         <!-- Navbar -->
         <nav class="glass fixed top-0 w-full z-50 h-16 transition-all duration-300 shadow-sm">
             <div class="max-w-[1440px] mx-auto h-full flex items-center justify-between px-4 lg:px-6">
@@ -277,7 +271,7 @@
                             <div class="md:col-span-1 space-y-4">
                                 <div class="glass-card rounded-2xl p-5 bg-white">
                                     <h3 class="font-bold text-slate-800 mb-3 text-lg">Intro</h3>
-                                    <p id="profile-page-bio" class="text-sm text-slate-600 mb-4 leading-relaxed whitespace-pre-line"></p>
+                                    <p id="profile-page-bio" class="text-sm text-slate-600 mb-4 leading-relaxed whitespace-pre-line">No bio yet.</p>
                                     <div class="text-xs text-slate-400 flex items-center gap-2 mb-2"><i class="fa-solid fa-clock"></i> Joined <span id="profile-join-date">...</span></div>
                                 </div>
                             </div>
@@ -286,7 +280,7 @@
                                 <div id="profile-content-posts" class="space-y-6"></div>
                                 <div id="profile-content-about" class="hidden glass-card rounded-2xl p-6 bg-white">
                                     <h3 class="font-bold text-xl mb-4">Full Bio</h3>
-                                    <p id="profile-full-bio" class="text-slate-700 leading-relaxed whitespace-pre-line"></p>
+                                    <p id="profile-full-bio" class="text-slate-700 leading-relaxed whitespace-pre-line">No details available.</p>
                                 </div>
                                 <div id="profile-content-saved" class="hidden space-y-6"></div>
                             </div>
@@ -574,7 +568,6 @@
         let unsubscribeChatList = null;
         let unsubscribeMessages = null;
         let unsubscribeNotifications = null;
-        let unsubscribeUsers = null;
         let currentChatId = null;
         let mySavedPosts = [];
         let allPostsCache = []; 
@@ -593,7 +586,6 @@
         let unsubscribeCall = null;
         let incomingCallData = null;
         let callType = 'video';
-        let iceCandidateQueue = [];
         
         const servers = {
             iceServers: [
@@ -625,7 +617,7 @@
                     await setDoc(userDirRef, {
                         name: user.displayName || user.email.split('@')[0],
                         photoURL: user.photoURL || defaultAvatar,
-                        headline: "",
+                        headline: "New Member",
                         id: user.uid,
                         createdAt: serverTimestamp()
                     });
@@ -635,12 +627,12 @@
                 const userProfileSnap = await getDoc(userProfileRef);
                 if(!userProfileSnap.exists()) {
                     await setDoc(userProfileRef, {
-                        headline: "",
-                        bio: "",
+                        headline: "New Member",
+                        bio: "Hello, I am new here!",
                         savedPosts: []
                     });
                 }
-                
+
                 document.getElementById('auth-overlay').classList.add('opacity-0', 'pointer-events-none');
                 setTimeout(() => document.getElementById('auth-overlay').classList.add('hidden'), 500);
 
@@ -673,21 +665,10 @@
             callType = type;
             document.getElementById('caller-name-display').innerText = (data.callerName || "Someone") + ` is calling (${type})...`;
             document.getElementById('incoming-call-modal').classList.remove('hidden');
-            
-            // PLAY RINGTONE with user interaction fallback
-            const r = document.getElementById('call-ringtone');
-            r.currentTime = 0;
-            const playPromise = r.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(error => {
-                    console.log("Autoplay blocked. User needs to interact with DOM first.");
-                });
-            }
         }
 
         window.declineCall = async () => {
             document.getElementById('incoming-call-modal').classList.add('hidden');
-            document.getElementById('call-ringtone').pause();
             if(incomingCallData) {
                 logSystemMessage(`❌ Missed ${incomingCallData.callType || 'video'} call`, incomingCallData.caller);
             }
@@ -697,7 +678,6 @@
 
         window.answerCall = async () => {
             document.getElementById('incoming-call-modal').classList.add('hidden');
-            document.getElementById('call-ringtone').pause();
             setupCallInterface(callType);
             document.getElementById('call-status-text').innerText = "Connecting...";
 
@@ -707,17 +687,14 @@
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ video: callType === 'video', audio: true });
                 document.getElementById('localVideo').srcObject = localStream;
-                // Important: Setup remote stream properly
-                const remoteStream = new MediaStream();
-                document.getElementById('remoteVideo').srcObject = remoteStream;
+                document.getElementById('remoteVideo').srcObject = new MediaStream();
 
                 peerConnection = new RTCPeerConnection(servers);
                 localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
-                // Improved stream handling
                 peerConnection.ontrack = (event) => {
                     event.streams[0].getTracks().forEach(track => {
-                        remoteStream.addTrack(track);
+                        document.getElementById('remoteVideo').srcObject.addTrack(track);
                     });
                 };
 
@@ -740,7 +717,7 @@
                     snapshot.docChanges().forEach((change) => {
                         if (change.type === 'added') {
                             const candidate = new RTCIceCandidate(change.doc.data());
-                            peerConnection.addIceCandidate(candidate).catch(e => console.error("Error adding candidate", e));
+                            peerConnection.addIceCandidate(candidate);
                         }
                     });
                 });
@@ -750,7 +727,7 @@
                 });
             } catch (err) {
                 console.error("Error answering call:", err);
-                alert("Call Failed: Could not access camera/microphone or connect. Check permissions.");
+                alert("Could not access camera/microphone. Please check permissions.");
                 endCallCleanup();
             }
         };
@@ -764,11 +741,6 @@
             callType = type;
             setupCallInterface(type);
             document.getElementById('call-status-text').innerText = "Calling...";
-            
-            // PLAY RINGTONE
-            const r = document.getElementById('call-ringtone');
-            r.currentTime = 0;
-            r.play().catch(e => console.log("Autoplay blocked:", e));
 
             try {
                 const callDocRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'calls'));
@@ -776,15 +748,14 @@
 
                 localStream = await navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true });
                 document.getElementById('localVideo').srcObject = localStream;
-                const remoteStream = new MediaStream();
-                document.getElementById('remoteVideo').srcObject = remoteStream;
+                document.getElementById('remoteVideo').srcObject = new MediaStream();
 
                 peerConnection = new RTCPeerConnection(servers);
                 localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
                 peerConnection.ontrack = (event) => {
                     event.streams[0].getTracks().forEach(track => {
-                        remoteStream.addTrack(track);
+                        document.getElementById('remoteVideo').srcObject.addTrack(track);
                     });
                 };
 
@@ -815,39 +786,26 @@
                     if(!data) return;
                     
                     if(!peerConnection.currentRemoteDescription && data.answer) {
-                        // ANSWERED - STOP RINGTONE
-                        document.getElementById('call-ringtone').pause();
-                        
                         const answer = new RTCSessionDescription(data.answer);
-                        peerConnection.setRemoteDescription(answer).then(() => {
-                             // Now safe to add any queued candidates (implied by snapshot below)
-                        });
+                        peerConnection.setRemoteDescription(answer);
                         document.getElementById('call-status-text').innerText = "Connected";
                     }
                     
                     if(data.status === 'ended') endCallCleanup();
                 });
 
-                // Listen for candidates from Callee - QUEUE logic to prevent race conditions
                 const calleeCandidatesRef = collection(db, 'artifacts', appId, 'public', 'data', 'calls', currentCallId, 'calleeCandidates');
                 onSnapshot(calleeCandidatesRef, (snapshot) => {
                     snapshot.docChanges().forEach((change) => {
                         if (change.type === 'added') {
                             const candidate = new RTCIceCandidate(change.doc.data());
-                            if (peerConnection.remoteDescription) {
-                                peerConnection.addIceCandidate(candidate).catch(e => console.error("Error adding candidate", e));
-                            } else {
-                                // Simple queue: retry shortly. In prod use a real queue array.
-                                setTimeout(() => {
-                                     if(peerConnection.remoteDescription) peerConnection.addIceCandidate(candidate).catch(e => console.error(e));
-                                }, 1000);
-                            }
+                            peerConnection.addIceCandidate(candidate);
                         }
                     });
                 });
             } catch (err) {
                 console.error("Error initiating call:", err);
-                alert("Call Failed: Could not access camera/microphone. Ensure you are on HTTPS.");
+                alert("Could not access camera/microphone. Ensure you are on HTTPS.");
                 endCallCleanup();
             }
         };
@@ -880,7 +838,6 @@
 
         function endCallCleanup() {
             document.getElementById('call-interface').classList.add('hidden');
-            document.getElementById('call-ringtone').pause();
             if(peerConnection) {
                 peerConnection.close();
                 peerConnection = null;
@@ -944,15 +901,10 @@
                 if(!document.getElementById('view-feed').classList.contains('hidden')) renderFeed(posts);
             });
 
-            // UPDATED: Using onSnapshot instead of getDocs for real-time presence
-            if(unsubscribeUsers) unsubscribeUsers();
-            unsubscribeUsers = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users_directory'), (snap) => {
-                const u = []; 
-                snap.forEach(d => u.push({id: d.id, ...d.data()}));
+            getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'users_directory')).then(s => {
+                const u = []; s.forEach(d => u.push({id: d.id, ...d.data()}));
                 allUsersCache = u;
                 renderNetwork(u);
-                // Also update chat list names/statuses if open
-                if(window.allChats.length) renderChatList(window.allChats);
             });
 
             onSnapshot(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'main'), (doc) => {
@@ -1067,7 +1019,6 @@
                 const otherUid = parts[0] === currentUser.uid ? parts[1] : parts[0];
                 const otherUser = allUsersCache.find(u => u.id === otherUid) || { name: "User", photoURL: "https://placehold.co/100x100" };
                 const isUnread = c.readBy && !c.readBy.includes(currentUser.uid);
-                
                 return `<div onclick="openChat('${c.id}', '${otherUser.name}')" class="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-white transition-all ${c.id === currentChatId ? 'bg-white shadow-sm ring-1 ring-slate-100' : 'hover:shadow-sm'} ${isUnread ? 'bg-blue-50/50' : ''}">
                     <div class="relative">
                         <img src="${otherUser.photoURL}" class="w-10 h-10 rounded-full bg-slate-200 object-cover">
@@ -1181,7 +1132,7 @@
              const user = currentUser;
              const name = data.name || user.displayName || user.email.split('@')[0] || "User";
              const pic = data.photoURL || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
-             const headline = data.headline || "";
+             const headline = data.headline || "New Member";
 
              document.getElementById('nav-avatar').src = pic;
              document.getElementById('sidebar-mini-avatar').src = pic;
@@ -1454,16 +1405,6 @@
              document.getElementById('profile-page-avatar').src = user ? user.photoURL : "https://placehold.co/100x100";
              document.getElementById('profile-page-headline').innerText = user ? (user.headline || "") : "";
              
-             // --- SHOW JOINED DATE ---
-             const dateSpan = document.getElementById('profile-join-date');
-             if (user.createdAt) {
-                 // Format: "Oct 24, 2025"
-                 const date = new Date(user.createdAt.seconds * 1000);
-                 dateSpan.innerText = date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-             } else {
-                 dateSpan.innerText = "Unknown";
-             }
-
              if(uid === currentUser.uid) {
                  document.getElementById('edit-profile-btn').classList.remove('hidden');
                  document.getElementById('follow-btn').classList.add('hidden');
@@ -1480,9 +1421,6 @@
                  const d = pDoc.data();
                  document.getElementById('profile-page-bio').innerText = d.bio || "No bio yet.";
                  document.getElementById('profile-full-bio').innerText = d.bio || "No details available.";
-             } else {
-                 document.getElementById('profile-page-bio').innerText = "No bio yet.";
-                 document.getElementById('profile-full-bio').innerText = "No details available.";
              }
              
              const userPosts = allPostsCache.filter(p => p.uid === uid);
@@ -1607,3 +1545,4 @@
     </script>
 </body>
 </html>
+
