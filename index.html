@@ -77,9 +77,6 @@
         .blob-1 { top: -10%; left: -10%; width: 300px; height: 300px; background: #9333ea; animation: pulse 8s infinite; }
         .blob-2 { bottom: -10%; right: -10%; width: 350px; height: 350px; background: #2563eb; animation: pulse 10s infinite reverse; }
         
-        /* Online Status Dot */
-        .status-dot-online { width: 12px; height: 12px; background-color: #22c55e; border: 2px solid white; border-radius: 50%; position: absolute; bottom: 0; right: 0; }
-        
         /* Video Call Specific Styles */
         video { transform: scaleX(-1); } /* Mirror effect for self-view */
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
@@ -88,7 +85,9 @@
 <body class="text-slate-800 font-sans antialiased overflow-x-hidden selection:bg-blue-100 selection:text-blue-900">
 
     <div id="app" class="min-h-screen flex flex-col transition-all duration-500">
-        
+        <!-- RINGTONE AUDIO -->
+        <audio id="call-ringtone" loop src="https://assets.mixkit.co/active_storage/sfx/2330/2330-preview.m4a"></audio>
+
         <!-- Navbar -->
         <nav class="glass fixed top-0 w-full z-50 h-16 transition-all duration-300 shadow-sm">
             <div class="max-w-[1440px] mx-auto h-full flex items-center justify-between px-4 lg:px-6">
@@ -571,6 +570,7 @@
         let unsubscribeChatList = null;
         let unsubscribeMessages = null;
         let unsubscribeNotifications = null;
+        let unsubscribeUsers = null;
         let currentChatId = null;
         let mySavedPosts = [];
         let allPostsCache = []; 
@@ -636,10 +636,6 @@
                     });
                 }
                 
-                // Start Presence Heartbeat
-                setInterval(() => updatePresence(), 60000); // Every minute
-                updatePresence(); // Immediately
-
                 document.getElementById('auth-overlay').classList.add('opacity-0', 'pointer-events-none');
                 setTimeout(() => document.getElementById('auth-overlay').classList.add('hidden'), 500);
 
@@ -650,23 +646,6 @@
                 document.getElementById('auth-overlay').classList.remove('hidden', 'opacity-0', 'pointer-events-none');
             }
         });
-        
-        // --- PRESENCE SYSTEM ---
-        async function updatePresence() {
-            if(!currentUser) return;
-            const userDirRef = doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', currentUser.uid);
-            await updateDoc(userDirRef, {
-                lastActive: serverTimestamp()
-            }).catch(e => console.log("Presence update silent fail", e)); 
-        }
-        
-        function isOnline(user) {
-            if(!user.lastActive) return false;
-            // Firestore timestamp to JS Date
-            const lastActive = user.lastActive.seconds ? user.lastActive.seconds : 0;
-            const now = Math.floor(Date.now() / 1000);
-            return (now - lastActive) < 120; // Active within last 2 mins
-        }
 
         // --- CALL LOGIC ---
         function monitorIncomingCalls() {
@@ -689,10 +668,16 @@
             callType = type;
             document.getElementById('caller-name-display').innerText = (data.callerName || "Someone") + ` is calling (${type})...`;
             document.getElementById('incoming-call-modal').classList.remove('hidden');
+            
+            // PLAY RINGTONE
+            const r = document.getElementById('call-ringtone');
+            r.currentTime = 0;
+            r.play().catch(e => console.log("Autoplay blocked:", e));
         }
 
         window.declineCall = async () => {
             document.getElementById('incoming-call-modal').classList.add('hidden');
+            document.getElementById('call-ringtone').pause();
             if(incomingCallData) {
                 logSystemMessage(`❌ Missed ${incomingCallData.callType || 'video'} call`, incomingCallData.caller);
             }
@@ -702,6 +687,7 @@
 
         window.answerCall = async () => {
             document.getElementById('incoming-call-modal').classList.add('hidden');
+            document.getElementById('call-ringtone').pause();
             setupCallInterface(callType);
             document.getElementById('call-status-text').innerText = "Connecting...";
 
@@ -765,6 +751,11 @@
             callType = type;
             setupCallInterface(type);
             document.getElementById('call-status-text').innerText = "Calling...";
+            
+            // PLAY RINGTONE
+            const r = document.getElementById('call-ringtone');
+            r.currentTime = 0;
+            r.play().catch(e => console.log("Autoplay blocked:", e));
 
             try {
                 const callDocRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'calls'));
@@ -810,6 +801,9 @@
                     if(!data) return;
                     
                     if(!peerConnection.currentRemoteDescription && data.answer) {
+                        // ANSWERED - STOP RINGTONE
+                        document.getElementById('call-ringtone').pause();
+                        
                         const answer = new RTCSessionDescription(data.answer);
                         peerConnection.setRemoteDescription(answer);
                         document.getElementById('call-status-text').innerText = "Connected";
@@ -862,6 +856,7 @@
 
         function endCallCleanup() {
             document.getElementById('call-interface').classList.add('hidden');
+            document.getElementById('call-ringtone').pause();
             if(peerConnection) {
                 peerConnection.close();
                 peerConnection = null;
@@ -925,10 +920,15 @@
                 if(!document.getElementById('view-feed').classList.contains('hidden')) renderFeed(posts);
             });
 
-            getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'users_directory')).then(s => {
-                const u = []; s.forEach(d => u.push({id: d.id, ...d.data()}));
+            // UPDATED: Using onSnapshot instead of getDocs for real-time presence
+            if(unsubscribeUsers) unsubscribeUsers();
+            unsubscribeUsers = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users_directory'), (snap) => {
+                const u = []; 
+                snap.forEach(d => u.push({id: d.id, ...d.data()}));
                 allUsersCache = u;
                 renderNetwork(u);
+                // Also update chat list names/statuses if open
+                if(window.allChats.length) renderChatList(window.allChats);
             });
 
             onSnapshot(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'main'), (doc) => {
@@ -1043,13 +1043,11 @@
                 const otherUid = parts[0] === currentUser.uid ? parts[1] : parts[0];
                 const otherUser = allUsersCache.find(u => u.id === otherUid) || { name: "User", photoURL: "https://placehold.co/100x100" };
                 const isUnread = c.readBy && !c.readBy.includes(currentUser.uid);
-                const online = isOnline(otherUser);
                 
                 return `<div onclick="openChat('${c.id}', '${otherUser.name}')" class="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-white transition-all ${c.id === currentChatId ? 'bg-white shadow-sm ring-1 ring-slate-100' : 'hover:shadow-sm'} ${isUnread ? 'bg-blue-50/50' : ''}">
                     <div class="relative">
                         <img src="${otherUser.photoURL}" class="w-10 h-10 rounded-full bg-slate-200 object-cover">
                         ${isUnread ? '<div class="absolute top-0 right-0 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></div>' : ''}
-                        ${online ? '<div class="status-dot-online"></div>' : ''}
                     </div>
                     <div class="truncate flex-grow">
                         <h4 class="font-bold text-sm text-slate-800 ${isUnread ? 'text-black' : ''}">${otherUser.name}</h4>
@@ -1251,15 +1249,10 @@
                 return; 
             }
             // MODIFIED: Inner div handles profile view, outer button handles chat
-            g.innerHTML = users.map(u => {
-                const online = isOnline(u);
-                return `
+            g.innerHTML = users.map(u => `
             <div class="glass-card rounded-xl p-4 flex items-center gap-4 hover:border-blue-300 transition-colors">
                 <div class="flex items-center gap-4 flex-grow cursor-pointer" onclick="viewProfile('${u.id}')">
-                    <div class="relative">
-                        <img src="${u.photoURL}" class="w-12 h-12 rounded-full bg-slate-100 object-cover">
-                        ${online ? '<div class="status-dot-online"></div>' : ''}
-                    </div>
+                    <img src="${u.photoURL}" class="w-12 h-12 rounded-full bg-slate-100 object-cover">
                     <div>
                         <h4 class="font-bold text-slate-800 text-sm">${u.name}</h4>
                         <p class="text-xs text-slate-500 truncate">${u.headline || 'Member'}</p>
@@ -1268,7 +1261,7 @@
                 <button onclick="startChat('${u.id}', '${u.name}')" class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-colors z-10" title="Message">
                     <i class="fa-regular fa-comment-dots"></i>
                 </button>
-            </div>`}).join('');
+            </div>`).join('');
         }
 
         window.startChat = async (uid, name) => {
