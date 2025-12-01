@@ -68,6 +68,7 @@
         .msg-bubble { max-width: 80%; padding: 10px 15px; border-radius: 15px; position: relative; word-wrap: break-word; font-size: 0.9rem; }
         .msg-me { background: #2563eb; color: white; border-bottom-right-radius: 2px; margin-left: auto; }
         .msg-them { background: #f1f5f9; color: #334155; border-bottom-left-radius: 2px; margin-right: auto; }
+        .msg-system { background: transparent; color: #64748b; font-size: 0.75rem; text-align: center; width: 100%; margin: 5px 0; font-style: italic; }
         .profile-tab { cursor: pointer; padding-bottom: 8px; color: #64748b; font-weight: 500; transition: all 0.2s; border-bottom: 2px solid transparent; }
         .profile-tab.active { color: #2563eb; border-bottom-color: #2563eb; }
         .profile-tab:hover { color: #334155; }
@@ -295,10 +296,20 @@
                         <div class="w-2/3 flex flex-col bg-white relative">
                             <div id="chat-header" class="h-16 border-b border-slate-100 flex items-center px-6 justify-between bg-white/80 backdrop-blur">
                                 <span class="font-bold text-slate-400 text-sm">Select a conversation</span>
-                                <!-- Video Call Button (Hidden until chat selected) -->
-                                <button id="start-call-btn" onclick="initiateCall()" class="hidden text-blue-500 hover:text-blue-600 w-10 h-10 rounded-full hover:bg-blue-50 flex items-center justify-center transition-all" title="Start Video Call">
-                                    <i class="fa-solid fa-video text-lg"></i>
-                                </button>
+                                <div class="flex gap-2">
+                                    <!-- Audio Call Button -->
+                                    <button id="start-audio-call-btn" onclick="initiateCall('audio')" class="hidden text-slate-500 hover:text-green-600 w-10 h-10 rounded-full hover:bg-green-50 flex items-center justify-center transition-all" title="Start Audio Call">
+                                        <i class="fa-solid fa-phone text-lg"></i>
+                                    </button>
+                                    <!-- Video Call Button -->
+                                    <button id="start-video-call-btn" onclick="initiateCall('video')" class="hidden text-blue-500 hover:text-blue-600 w-10 h-10 rounded-full hover:bg-blue-50 flex items-center justify-center transition-all" title="Start Video Call">
+                                        <i class="fa-solid fa-video text-lg"></i>
+                                    </button>
+                                    <!-- Delete Chat Button -->
+                                    <button id="delete-chat-btn" onclick="deleteChat()" class="hidden text-red-400 hover:text-red-600 w-10 h-10 rounded-full hover:bg-red-50 flex items-center justify-center transition-all" title="Delete Conversation">
+                                        <i class="fa-solid fa-trash text-lg"></i>
+                                    </button>
+                                </div>
                             </div>
                             <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/30 custom-scrollbar flex flex-col"><div class="flex h-full items-center justify-center text-slate-400 text-sm flex-col gap-2"><i class="fa-regular fa-paper-plane text-4xl mb-2 opacity-50"></i><p>Select a user to start chatting.</p></div></div>
                             <div class="p-4 border-t border-slate-100 bg-white">
@@ -449,7 +460,7 @@
                 <!-- Header -->
                 <div class="absolute top-0 left-0 w-full p-4 bg-gradient-to-b from-black/70 to-transparent z-10 flex justify-between items-center text-white">
                     <div class="flex items-center gap-3">
-                        <i class="fa-solid fa-video text-red-500 animate-pulse"></i>
+                        <i id="call-icon-indicator" class="fa-solid fa-video text-red-500 animate-pulse"></i>
                         <span id="call-status-text" class="font-medium">Connecting...</span>
                     </div>
                 </div>
@@ -462,6 +473,16 @@
                     <!-- Local Video (Picture in Picture) -->
                     <div class="absolute bottom-4 right-4 w-32 h-48 md:w-48 md:h-64 bg-slate-900 rounded-xl overflow-hidden border-2 border-slate-700 shadow-2xl">
                         <video id="localVideo" autoplay muted playsinline class="w-full h-full object-cover"></video>
+                    </div>
+                    
+                    <!-- Audio Only Avatar Placeholder -->
+                    <div id="audio-call-placeholder" class="hidden absolute inset-0 flex items-center justify-center bg-slate-900 z-20">
+                        <div class="text-center">
+                            <div class="w-32 h-32 rounded-full bg-slate-700 flex items-center justify-center mx-auto mb-4 animate-pulse">
+                                <i class="fa-solid fa-user text-6xl text-slate-400"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold text-white">Audio Call</h2>
+                        </div>
                     </div>
                 </div>
 
@@ -542,6 +563,7 @@
 
         // State
         window.currentUser = null;
+        window.allChats = []; // Global chat cache
         let unsubscribePosts = null;
         let unsubscribeChatList = null;
         let unsubscribeMessages = null;
@@ -563,6 +585,7 @@
         let currentCallId = null;
         let unsubscribeCall = null;
         let incomingCallData = null;
+        let callType = 'video';
         
         const servers = {
             iceServers: [
@@ -570,25 +593,23 @@
             ]
         };
 
-        // Auth Listener - UPDATED for Automatic Registration
+        // Auth Listener
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
                 window.currentUser = user;
                 
-                // 1. Ensure Display Name Exists locally
                 if(!user.displayName) {
                     const name = user.email.split('@')[0];
                     await updateProfile(user, { displayName: name });
                 }
                 
-                // 2. Ensure Photo Exists locally
                 const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.email)}&background=random`;
                 if(!user.photoURL) {
                      await updateProfile(user, { photoURL: defaultAvatar });
                 }
 
-                // 3. CRITICAL: Register in Public Directory (Fixes "No Users" issue)
+                // Register user in public directory if missing
                 const userDirRef = doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', user.uid);
                 const userDirSnap = await getDoc(userDirRef);
                 
@@ -602,7 +623,6 @@
                     });
                 }
                 
-                // 4. CRITICAL: Ensure Profile Doc Exists (Fixes "Guest" label issue)
                 const userProfileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'main');
                 const userProfileSnap = await getDoc(userProfileRef);
                 if(!userProfileSnap.exists()) {
@@ -624,9 +644,7 @@
             }
         });
 
-        // --- NEW: Call Logic ---
-        
-        // 1. Monitor Incoming Calls
+        // --- CALL LOGIC ---
         function monitorIncomingCalls() {
             const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'calls'), orderBy('createdAt', 'desc'));
             
@@ -643,26 +661,31 @@
         function showIncomingCall(callId, data) {
             currentCallId = callId;
             incomingCallData = data;
-            document.getElementById('caller-name-display').innerText = (data.callerName || "Someone") + " is calling...";
+            const type = data.callType || 'video';
+            callType = type;
+            document.getElementById('caller-name-display').innerText = (data.callerName || "Someone") + ` is calling (${type})...`;
             document.getElementById('incoming-call-modal').classList.remove('hidden');
         }
 
         window.declineCall = async () => {
             document.getElementById('incoming-call-modal').classList.add('hidden');
+            if(incomingCallData) {
+                logSystemMessage(`❌ Missed ${incomingCallData.callType || 'video'} call`, incomingCallData.caller);
+            }
             currentCallId = null;
             incomingCallData = null;
         };
 
         window.answerCall = async () => {
             document.getElementById('incoming-call-modal').classList.add('hidden');
-            document.getElementById('call-interface').classList.remove('hidden');
+            setupCallInterface(callType);
             document.getElementById('call-status-text').innerText = "Connecting...";
 
             const callId = currentCallId;
             const offer = incomingCallData.offer;
 
             try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                localStream = await navigator.mediaDevices.getUserMedia({ video: callType === 'video', audio: true });
                 document.getElementById('localVideo').srcObject = localStream;
                 document.getElementById('remoteVideo').srcObject = new MediaStream();
 
@@ -709,20 +732,21 @@
             }
         };
 
-        window.initiateCall = async () => {
+        window.initiateCall = async (type = 'video') => {
             if(!currentChatId) return;
             const parts = currentChatId.split('_');
             const targetUid = parts.find(id => id !== currentUser.uid);
             if(!targetUid) return alert("Cannot call this user.");
 
-            document.getElementById('call-interface').classList.remove('hidden');
+            callType = type;
+            setupCallInterface(type);
             document.getElementById('call-status-text').innerText = "Calling...";
 
             try {
                 const callDocRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'calls'));
                 currentCallId = callDocRef.id;
 
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                localStream = await navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true });
                 document.getElementById('localVideo').srcObject = localStream;
                 document.getElementById('remoteVideo').srcObject = new MediaStream();
 
@@ -749,10 +773,13 @@
                     caller: currentUser.uid,
                     callerName: document.getElementById('menu-name').innerText,
                     callee: targetUid,
+                    callType: type,
                     offer: { type: offer.type, sdp: offer.sdp },
                     status: 'offering',
                     createdAt: serverTimestamp()
                 });
+                
+                logSystemMessage(`📞 Incoming ${type} call`, targetUid);
 
                 unsubscribeCall = onSnapshot(callDocRef, (snap) => {
                     const data = snap.data();
@@ -782,11 +809,28 @@
                 endCallCleanup();
             }
         };
+        
+        function setupCallInterface(type) {
+            document.getElementById('call-interface').classList.remove('hidden');
+            const icon = document.getElementById('call-icon-indicator');
+            const placeholder = document.getElementById('audio-call-placeholder');
+            
+            if(type === 'audio') {
+                icon.className = "fa-solid fa-phone text-green-500 animate-pulse";
+                placeholder.classList.remove('hidden');
+                document.getElementById('btn-toggle-cam').classList.add('hidden');
+            } else {
+                icon.className = "fa-solid fa-video text-red-500 animate-pulse";
+                placeholder.classList.add('hidden');
+                document.getElementById('btn-toggle-cam').classList.remove('hidden');
+            }
+        }
 
         window.endCall = async () => {
              if(currentCallId) {
                  try {
                      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'calls', currentCallId), { status: 'ended' });
+                     logSystemMessage("Call ended");
                  } catch(e) {}
              }
              endCallCleanup();
@@ -823,13 +867,30 @@
                 document.getElementById('btn-toggle-cam').classList.toggle('bg-slate-700');
             }
         };
+        
+        async function logSystemMessage(text, targetUid = null) {
+            let chatId = currentChatId;
+            if(!chatId && targetUid) {
+                 chatId = [currentUser.uid, targetUid].sort().join('_');
+            }
+            if(chatId) {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'chats', chatId, 'messages'), { 
+                    text: text, 
+                    type: 'system',
+                    senderId: 'system', 
+                    createdAt: serverTimestamp() 
+                });
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'chats', chatId), {
+                    lastUpdated: serverTimestamp()
+                }, { merge: true });
+            }
+        }
 
-        // --- Standard App Functions ---
+        // --- Core Functions ---
 
         function loadData() {
             if (!currentUser) return;
             
-            // Posts
             if (unsubscribePosts) unsubscribePosts();
             const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'posts'));
             unsubscribePosts = onSnapshot(q, (snap) => {
@@ -840,14 +901,12 @@
                 if(!document.getElementById('view-feed').classList.contains('hidden')) renderFeed(posts);
             });
 
-            // Users Cache
             getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'users_directory')).then(s => {
                 const u = []; s.forEach(d => u.push({id: d.id, ...d.data()}));
                 allUsersCache = u;
                 renderNetwork(u);
             });
 
-            // User Profile Data
             onSnapshot(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'main'), (doc) => {
                 if(doc.exists()) {
                     const d = doc.data();
@@ -856,12 +915,10 @@
                     if(allPostsCache.length) renderFeed(allPostsCache);
                     if(!document.getElementById('view-saved').classList.contains('hidden')) renderSavedPosts();
                 } else {
-                    // Fallback UI update if doc is slow to create
                     updateUI({});
                 }
             });
 
-            // Start Listeners
             monitorNotifications();
             monitorChats();
             monitorIncomingCalls(); 
@@ -939,7 +996,8 @@
                 const chats = [];
                 snap.forEach(d => {
                     const data = d.data();
-                    if(d.id.includes(currentUser.uid)) {
+                    const parts = d.id.split('_');
+                    if(parts.includes(currentUser.uid)) {
                         chats.push({id: d.id, ...data});
                         if(data.readBy && !data.readBy.includes(currentUser.uid)) hasUnread = true;
                     }
@@ -948,6 +1006,7 @@
                 const mobileBadge = document.getElementById('mobile-chat-badge');
                 if(hasUnread) { badge.style.display = 'block'; mobileBadge.style.display = 'block'; }
                 else { badge.style.display = 'none'; mobileBadge.style.display = 'none'; }
+                window.allChats = chats;
                 renderChatList(chats);
             });
         }
@@ -975,9 +1034,13 @@
 
         window.openChat = async (chatId, name) => {
             currentChatId = chatId;
-            renderChatList([]); 
+            // Removed the line causing the sidebar to clear: renderChatList([])
+            if(window.allChats) renderChatList(window.allChats);
+            
             document.querySelector('#chat-header span').innerText = name;
-            document.getElementById('start-call-btn').classList.remove('hidden');
+            document.getElementById('start-video-call-btn').classList.remove('hidden');
+            document.getElementById('start-audio-call-btn').classList.remove('hidden');
+            document.getElementById('delete-chat-btn').classList.remove('hidden');
 
             const input = document.getElementById('message-input');
             const btn = document.getElementById('message-send-btn');
@@ -996,12 +1059,30 @@
                 c.innerHTML = '';
                 snap.forEach(d => {
                     const m = d.data();
+                    if(m.type === 'system') {
+                        c.innerHTML += `<div class="msg-system">${m.text}</div>`;
+                        return;
+                    }
                     const me = m.senderId === currentUser.uid;
                     c.innerHTML += `<div class="flex w-full mb-2 ${me?'justify-end':'justify-start'}"><div class="msg-bubble ${me?'msg-me':'msg-them'} shadow-sm">${m.text}</div></div>`;
                 });
                 c.scrollTop = c.scrollHeight;
             });
             router('messaging');
+        };
+        
+        window.deleteChat = async () => {
+            if(!confirm("Delete this conversation?")) return;
+            const s = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'chats', currentChatId, 'messages'));
+            s.docs.forEach(d => deleteDoc(d.ref));
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'chats', currentChatId));
+            
+            document.getElementById('chat-messages').innerHTML = '';
+            document.getElementById('start-video-call-btn').classList.add('hidden');
+            document.getElementById('start-audio-call-btn').classList.add('hidden');
+            document.getElementById('delete-chat-btn').classList.add('hidden');
+            document.querySelector('#chat-header span').innerText = "Select a conversation";
+            currentChatId = null;
         };
 
         window.sendMessage = async (e) => {
@@ -1047,10 +1128,8 @@
 
         window.handleSignOut = () => signOut(auth);
 
-        // Updated to use current user fallback
         function updateUI(data) {
              const user = currentUser;
-             // Prefer data from DB, fallback to Auth object, fallback to Defaults
              const name = data.name || user.displayName || user.email.split('@')[0] || "User";
              const pic = data.photoURL || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
              const headline = data.headline || "New Member";
@@ -1065,14 +1144,13 @@
              document.getElementById('menu-name').innerText = name;
              document.getElementById('composer-name-placeholder').innerText = name.split(' ')[0];
              
-             // Sync inputs
              document.getElementById('settings-username').value = name;
              document.getElementById('edit-headline').value = headline;
              document.getElementById('edit-bio').value = data.bio || "";
              document.getElementById('edit-modal-avatar').src = pic;
         }
 
-        // --- Post Rendering Logic ---
+        // --- Post Rendering ---
         
         function createPostHTML(post, context) {
             const isProject = post.type === 'project';
@@ -1138,16 +1216,27 @@
         function renderNetwork(users) {
             const g = document.getElementById('network-grid');
             if(!users.length) { 
-                // Render at least current user if no one else
                 if(currentUser) {
-                     // small timeout to let directory populate
                      g.innerHTML = `<p class="col-span-2 text-center text-slate-400">Initializing your network...</p>`;
                      return;
                 }
                 g.innerHTML = `<p class="col-span-2 text-center text-slate-400">No users found.</p>`; 
                 return; 
             }
-            g.innerHTML = users.map(u => `<div class="glass-card rounded-xl p-4 flex items-center gap-4 hover:border-blue-300 transition-colors cursor-pointer" onclick="startChat('${u.id}', '${u.name}')"><img src="${u.photoURL}" class="w-12 h-12 rounded-full bg-slate-100 object-cover"><div class="flex-grow"><h4 class="font-bold text-slate-800 text-sm">${u.name}</h4><p class="text-xs text-slate-500 truncate">${u.headline || 'Member'}</p></div><button class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100"><i class="fa-regular fa-comment-dots"></i></button></div>`).join('');
+            // MODIFIED: Inner div handles profile view, outer button handles chat
+            g.innerHTML = users.map(u => `
+            <div class="glass-card rounded-xl p-4 flex items-center gap-4 hover:border-blue-300 transition-colors">
+                <div class="flex items-center gap-4 flex-grow cursor-pointer" onclick="viewProfile('${u.id}')">
+                    <img src="${u.photoURL}" class="w-12 h-12 rounded-full bg-slate-100 object-cover">
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm">${u.name}</h4>
+                        <p class="text-xs text-slate-500 truncate">${u.headline || 'Member'}</p>
+                    </div>
+                </div>
+                <button onclick="startChat('${u.id}', '${u.name}')" class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-colors z-10" title="Message">
+                    <i class="fa-regular fa-comment-dots"></i>
+                </button>
+            </div>`).join('');
         }
 
         window.startChat = async (uid, name) => {
@@ -1168,7 +1257,7 @@
             openChat(chatId, name);
         };
 
-        // --- Standard Actions (Like, Comment, Save) ---
+        // --- Standard Actions ---
         
         window.toggleLike = async (postId) => {
              const postRef = doc(db, 'artifacts', appId, 'public', 'data', 'posts', postId);
@@ -1301,7 +1390,16 @@
         window.viewMyProfile = () => { if(currentUser) viewProfile(currentUser.uid); };
         window.viewProfile = async (uid) => {
              let user = allUsersCache.find(u => u.id === uid);
-             if(!user && uid === currentUser.uid) user = { name: "Me", photoURL: document.getElementById('nav-avatar').src, headline: "My Headline" };
+             if(!user && uid === currentUser.uid) {
+                 user = { name: "Me", photoURL: document.getElementById('nav-avatar').src, headline: "My Headline" };
+             } else if (!user) {
+                 const uDoc = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', uid));
+                 if(uDoc.exists()) {
+                     user = uDoc.data();
+                 } else {
+                     user = { name: "Unknown User", photoURL: "https://placehold.co/100x100" };
+                 }
+             }
              
              document.getElementById('profile-page-name').innerText = user ? user.name : "User";
              document.getElementById('profile-page-avatar').src = user ? user.photoURL : "https://placehold.co/100x100";
