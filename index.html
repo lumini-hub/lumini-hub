@@ -678,136 +678,185 @@
 
         window.answerCall = async () => {
             document.getElementById('incoming-call-modal').classList.add('hidden');
+            
+            if (!incomingCallData) return;
+            
+            const callId = incomingCallData.id;
+            const offer = incomingCallData.offer;
+            callType = incomingCallData.type;
+
             setupCallInterface(callType);
             document.getElementById('call-status-text').innerText = "Connecting...";
 
-            const callId = currentCallId;
-            const offer = incomingCallData.offer;
-
+            // 1. Get Local Inputs
             try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: callType === 'video', audio: true });
-                document.getElementById('localVideo').srcObject = localStream;
-                document.getElementById('remoteVideo').srcObject = new MediaStream();
-
-                peerConnection = new RTCPeerConnection(servers);
-                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-
-                peerConnection.ontrack = (event) => {
-                    event.streams[0].getTracks().forEach(track => {
-                        document.getElementById('remoteVideo').srcObject.addTrack(track);
-                    });
-                };
-
-                peerConnection.onicecandidate = async (event) => {
-                    if(event.candidate) {
-                        const calleeCandidatesRef = collection(db, 'artifacts', appId, 'public', 'data', 'calls', callId, 'calleeCandidates');
-                        await addDoc(calleeCandidatesRef, event.candidate.toJSON());
-                    }
-                };
-
-                await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-                const answer = await peerConnection.createAnswer();
-                await peerConnection.setLocalDescription(answer);
-
-                const callDoc = doc(db, 'artifacts', appId, 'public', 'data', 'calls', callId);
-                await updateDoc(callDoc, { answer: { type: answer.type, sdp: answer.sdp }, status: 'answered' });
-
-                const callerCandidatesRef = collection(db, 'artifacts', appId, 'public', 'data', 'calls', callId, 'callerCandidates');
-                onSnapshot(callerCandidatesRef, (snapshot) => {
-                    snapshot.docChanges().forEach((change) => {
-                        if (change.type === 'added') {
-                            const candidate = new RTCIceCandidate(change.doc.data());
-                            peerConnection.addIceCandidate(candidate);
-                        }
-                    });
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: callType === 'video', 
+                    audio: true 
                 });
                 
-                onSnapshot(callDoc, (snap) => {
-                    if(snap.exists() && snap.data().status === 'ended') endCallCleanup();
-                });
-            } catch (err) {
-                console.error("Error answering call:", err);
-                alert("Could not access camera/microphone. Please check permissions.");
-                endCallCleanup();
+                const localVideo = document.getElementById('localVideo');
+                if (localVideo) {
+                    localVideo.srcObject = localStream;
+                    localVideo.muted = true;
+                }
+            } catch (e) {
+                console.error("Error getting user media:", e);
+                return;
             }
-        };
 
+            // 2. Prepare Peer Connection
+            peerConnection = new RTCPeerConnection(servers);
+            
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
+
+            // Handle incoming stream
+            peerConnection.ontrack = (event) => {
+                const remoteVideo = document.getElementById('remoteVideo');
+                if (remoteVideo) {
+                    remoteVideo.srcObject = event.streams[0];
+                    document.getElementById('call-status-text').innerText = "Connected";
+                }
+            };
+
+            // Send ICE candidates
+            peerConnection.onicecandidate = async (event) => {
+                if (event.candidate) {
+                    const candidatesRef = collection(db, 'artifacts', appId, 'public', 'data', 'calls', callId, 'calleeCandidates');
+                    await addDoc(candidatesRef, event.candidate.toJSON());
+                }
+            };
+
+            // 3. Set Remote Description (The Offer)
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+
+            // 4. Create Answer
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+
+            // 5. Send Answer to DB
+            const callDoc = doc(db, 'artifacts', appId, 'public', 'data', 'calls', callId);
+            await updateDoc(callDoc, {
+                answer: { type: answer.type, sdp: answer.sdp },
+                status: 'answered'
+            });
+
+            // 6. Listen for Caller's ICE Candidates
+            const callerCandidatesRef = collection(db, 'artifacts', appId, 'public', 'data', 'calls', callId, 'callerCandidates');
+            onSnapshot(callerCandidatesRef, (snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === 'added') {
+                        const candidate = new RTCIceCandidate(change.doc.data());
+                        peerConnection.addIceCandidate(candidate);
+                    }
+                });
+            });
+            
+            // Listen for end
+            onSnapshot(callDoc, (snap) => {
+                if(snap.exists() && snap.data().status === 'ended') endCallCleanup();
+            });
+        };
         window.initiateCall = async (type = 'video') => {
-            if(!currentChatId) return;
+            if (!currentChatId) return alert("Open a chat first!");
+            
             const parts = currentChatId.split('_');
             const targetUid = parts.find(id => id !== currentUser.uid);
-            if(!targetUid) return alert("Cannot call this user.");
+            if (!targetUid) return alert("Cannot identify user to call.");
 
             callType = type;
-            setupCallInterface(type);
+            setupCallInterface(type); 
             document.getElementById('call-status-text').innerText = "Calling...";
 
+            // 1. Get Local Inputs
             try {
-                const callDocRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'calls'));
-                currentCallId = callDocRef.id;
-
-                localStream = await navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true });
-                document.getElementById('localVideo').srcObject = localStream;
-                document.getElementById('remoteVideo').srcObject = new MediaStream();
-
-                peerConnection = new RTCPeerConnection(servers);
-                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-
-                peerConnection.ontrack = (event) => {
-                    event.streams[0].getTracks().forEach(track => {
-                        document.getElementById('remoteVideo').srcObject.addTrack(track);
-                    });
-                };
-
-                peerConnection.onicecandidate = async (event) => {
-                    if(event.candidate) {
-                        const callerCandidatesRef = collection(db, 'artifacts', appId, 'public', 'data', 'calls', currentCallId, 'callerCandidates');
-                        await addDoc(callerCandidatesRef, event.candidate.toJSON());
-                    }
-                };
-
-                const offer = await peerConnection.createOffer();
-                await peerConnection.setLocalDescription(offer);
-
-                await setDoc(callDocRef, {
-                    caller: currentUser.uid,
-                    callerName: document.getElementById('menu-name').innerText,
-                    callee: targetUid,
-                    callType: type,
-                    offer: { type: offer.type, sdp: offer.sdp },
-                    status: 'offering',
-                    createdAt: serverTimestamp()
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: type === 'video', 
+                    audio: true 
                 });
                 
-                logSystemMessage(`📞 Incoming ${type} call`, targetUid);
-
-                unsubscribeCall = onSnapshot(callDocRef, (snap) => {
-                    const data = snap.data();
-                    if(!data) return;
-                    
-                    if(!peerConnection.currentRemoteDescription && data.answer) {
-                        const answer = new RTCSessionDescription(data.answer);
-                        peerConnection.setRemoteDescription(answer);
-                        document.getElementById('call-status-text').innerText = "Connected";
-                    }
-                    
-                    if(data.status === 'ended') endCallCleanup();
-                });
-
-                const calleeCandidatesRef = collection(db, 'artifacts', appId, 'public', 'data', 'calls', currentCallId, 'calleeCandidates');
-                onSnapshot(calleeCandidatesRef, (snapshot) => {
-                    snapshot.docChanges().forEach((change) => {
-                        if (change.type === 'added') {
-                            const candidate = new RTCIceCandidate(change.doc.data());
-                            peerConnection.addIceCandidate(candidate);
-                        }
-                    });
-                });
-            } catch (err) {
-                console.error("Error initiating call:", err);
-                alert("Could not access camera/microphone. Ensure you are on HTTPS.");
+                const localVideo = document.getElementById('localVideo');
+                if (localVideo) {
+                    localVideo.srcObject = localStream;
+                    localVideo.muted = true; 
+                }
+            } catch (e) {
+                console.error("Error getting user media:", e);
+                alert("Could not access camera/microphone.");
                 endCallCleanup();
+                return;
             }
+
+            // 2. Prepare Peer Connection
+            peerConnection = new RTCPeerConnection(servers);
+            
+            // Add local tracks to the connection
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
+
+            // When remote stream arrives, show it
+            peerConnection.ontrack = (event) => {
+                const remoteVideo = document.getElementById('remoteVideo');
+                if (remoteVideo) {
+                    remoteVideo.srcObject = event.streams[0];
+                    document.getElementById('call-status-text').innerText = "Connected";
+                }
+            };
+
+            // Gather ICE candidates and save them to DB
+            peerConnection.onicecandidate = async (event) => {
+                if (event.candidate && currentCallId) {
+                    const candidatesRef = collection(db, 'artifacts', appId, 'public', 'data', 'calls', currentCallId, 'callerCandidates');
+                    await addDoc(candidatesRef, event.candidate.toJSON());
+                }
+            };
+
+            // 3. Create Offer
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+
+            // 4. Send Offer to DB
+            const callDoc = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'calls'), {
+                callerId: currentUser.uid,
+                callerName: document.getElementById('menu-name').innerText,
+                targetId: targetUid,
+                type: type,
+                offer: { type: offer.type, sdp: offer.sdp },
+                status: 'offer',
+                createdAt: serverTimestamp()
+            });
+            
+            currentCallId = callDoc.id;
+
+            // 5. LISTEN FOR ANSWER (This was likely missing or broken)
+            onSnapshot(callDoc, (snap) => {
+                const data = snap.data();
+                if (!data) return;
+                
+                // If listener answered, set the remote description
+                if (data.answer && !peerConnection.currentRemoteDescription) {
+                    const answer = new RTCSessionDescription(data.answer);
+                    peerConnection.setRemoteDescription(answer);
+                }
+                
+                if (data.status === 'ended') {
+                    endCallCleanup();
+                }
+            });
+
+            // 6. Listen for Listener's ICE Candidates
+            const calleeCandidatesRef = collection(db, 'artifacts', appId, 'public', 'data', 'calls', currentCallId, 'calleeCandidates');
+            onSnapshot(calleeCandidatesRef, (snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === 'added') {
+                        const candidate = new RTCIceCandidate(change.doc.data());
+                        peerConnection.addIceCandidate(candidate);
+                    }
+                });
+            });
         };
         
         function setupCallInterface(type) {
