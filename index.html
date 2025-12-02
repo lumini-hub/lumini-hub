@@ -34,6 +34,8 @@
                         'fade-in': 'fadeIn 0.3s ease-out',
                         'slide-up': 'slideUp 0.3s ease-out',
                         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-short': 'bounceShort 0.5s ease-in-out 1',
+                        'gradient-x': 'gradient-x 3s ease infinite',
                     },
                     keyframes: {
                         fadeIn: {
@@ -43,7 +45,21 @@
                         slideUp: {
                             '0%': { transform: 'translateY(10px)', opacity: '0' },
                             '100%': { transform: 'translateY(0)', opacity: '1' },
-                        }
+                        },
+                        bounceShort: {
+                            '0%, 100%': { transform: 'scale(1)' },
+                            '50%': { transform: 'scale(1.05)' },
+                        },
+                        'gradient-x': {
+                            '0%, 100%': {
+                                'background-size':'200% 200%',
+                                'background-position': 'left center'
+                            },
+                            '50%': {
+                                'background-size':'200% 200%',
+                                'background-position': 'right center'
+                            },
+                        },
                     }
                 }
             }
@@ -80,6 +96,25 @@
         /* Online Status Dot */
         .status-dot-online { width: 12px; height: 12px; background-color: #22c55e; border: 2px solid white; border-radius: 50%; position: absolute; bottom: 0; right: 0; }
         
+        /* Admin Badge Style */
+        .admin-badge {
+            background: linear-gradient(45deg, #ff0000, #ff8c00, #ffd700, #ff0000);
+            background-size: 300% 300%;
+            animation: gradient-x 4s ease infinite;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-left: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            box-shadow: 0 2px 5px rgba(255, 0, 0, 0.3);
+            vertical-align: middle;
+        }
+        
         /* Video Call Specific Styles */
         video { transform: scaleX(-1); } /* Mirror effect for self-view */
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
@@ -103,7 +138,7 @@
                     <span class="font-heading font-bold text-2xl tracking-tight text-gradient hidden sm:block">Lumini</span>
                 </div>
 
-                <!-- Search Bar (Hidden on small mobile to save space) -->
+                <!-- Search Bar -->
                 <div class="hidden md:flex relative items-center justify-center w-1/2">
                     <div class="relative w-full max-w-md">
                         <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
@@ -180,7 +215,7 @@
         <main class="flex-grow pt-20 pb-6 px-4">
             <div class="max-w-[1440px] mx-auto grid grid-cols-1 md:grid-cols-12 gap-8">
                 
-                <!-- Left Sidebar (Hidden on mobile, block on tablet/desktop) -->
+                <!-- Left Sidebar -->
                 <aside class="hidden md:block md:col-span-3 lg:col-span-3 space-y-2 sticky top-24 h-fit">
                     <div onclick="viewMyProfile()" class="sidebar-link mb-4 hover:bg-slate-200 rounded-xl transition-colors">
                         <img id="sidebar-mini-avatar" src="" class="w-9 h-9 rounded-full object-cover bg-slate-300">
@@ -197,7 +232,7 @@
                     <div class="mt-8 px-4 text-[10px] text-slate-400 leading-relaxed">Lumini © 2025 · Privacy · Terms · Cookies · More</div>
                 </aside>
 
-                <!-- Center Content (Takes full width on mobile, partial on tablet/desktop) -->
+                <!-- Center Content -->
                 <section id="main-container" class="col-span-12 md:col-span-9 lg:col-span-6">
                     
                     <!-- View: Feed -->
@@ -271,6 +306,7 @@
                                             <i class="fa-brands fa-facebook-messenger"></i> Message
                                         </button>
                                     </div>
+                                    <div id="admin-controls-container"></div>
                                 </div>
                                 
                                 <div class="border-t border-slate-200 pt-4 flex gap-8 text-sm font-semibold">
@@ -301,16 +337,14 @@
                         </div>
                     </div>
 
-                    <!-- View: Messaging (Responsive Split View) -->
+                    <!-- View: Messaging -->
                     <div id="view-messaging" class="view-section hidden h-[calc(100vh-140px)] glass-card rounded-2xl flex overflow-hidden border border-slate-200">
                         
-                        <!-- Chat List: Hidden on mobile when chat is active -->
                         <div id="msg-list-col" class="w-full md:w-1/3 border-r border-slate-100 bg-slate-50/50 flex flex-col">
                             <div class="p-4 border-b border-slate-100"><h3 class="font-heading font-bold text-slate-800">Chats</h3></div>
                             <div id="chat-list" class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar"></div>
                         </div>
                         
-                        <!-- Chat Window: Hidden on mobile when no chat is active -->
                         <div id="msg-chat-col" class="hidden md:flex w-full md:w-2/3 flex-col bg-white relative">
                             <div id="chat-header" class="h-16 border-b border-slate-100 flex items-center px-4 justify-between bg-white/80 backdrop-blur">
                                 <div class="flex items-center gap-3">
@@ -318,15 +352,12 @@
                                     <span class="font-bold text-slate-400 text-sm">Select a conversation</span>
                                 </div>
                                 <div class="flex gap-2">
-                                    <!-- Audio Call Button -->
                                     <button id="start-audio-call-btn" onclick="initiateCall('audio')" class="hidden text-slate-500 hover:text-green-600 w-10 h-10 rounded-full hover:bg-green-50 flex items-center justify-center transition-all" title="Start Audio Call">
                                         <i class="fa-solid fa-phone text-lg"></i>
                                     </button>
-                                    <!-- Video Call Button -->
                                     <button id="start-video-call-btn" onclick="initiateCall('video')" class="hidden text-blue-500 hover:text-blue-600 w-10 h-10 rounded-full hover:bg-blue-50 flex items-center justify-center transition-all" title="Start Video Call">
                                         <i class="fa-solid fa-video text-lg"></i>
                                     </button>
-                                    <!-- Delete Chat Button -->
                                     <button id="delete-chat-btn" onclick="deleteChat()" class="hidden text-red-400 hover:text-red-600 w-10 h-10 rounded-full hover:bg-red-50 flex items-center justify-center transition-all" title="Delete Conversation">
                                         <i class="fa-solid fa-trash text-lg"></i>
                                     </button>
@@ -343,7 +374,7 @@
                     </div>
                 </section>
 
-                <!-- Right Sidebar (Hidden on mobile/tablet, block on large desktop) -->
+                <!-- Right Sidebar -->
                 <aside id="right-sidebar" class="hidden lg:block lg:col-span-3 space-y-6 sticky top-24 h-fit">
                     <div class="glass-card rounded-2xl p-5 bg-white">
                         <h3 class="font-heading font-bold text-slate-500 text-sm mb-4 uppercase">Documentation</h3>
@@ -366,7 +397,24 @@
 
         <!-- Modals -->
         
-        <!-- FOLLOW LIST MODAL (NEW) -->
+        <!-- ADMIN BAN MODAL (NEW) -->
+        <div id="ban-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 animate-fade-in">
+            <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden transform transition-all scale-100">
+                <div class="p-6 text-center">
+                    <div id="ban-icon-container" class="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                        <i id="ban-icon" class="fa-solid fa-gavel text-2xl text-red-600"></i>
+                    </div>
+                    <h3 id="ban-modal-title" class="text-xl font-bold text-slate-800 mb-2">Ban User?</h3>
+                    <p id="ban-modal-desc" class="text-slate-500 text-sm mb-6">They will be immediately logged out and lose access.</p>
+                    <div class="flex gap-3">
+                        <button onclick="closeBanModal()" class="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition-colors">Cancel</button>
+                        <button id="confirm-ban-btn" onclick="executeBan()" class="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm shadow-lg shadow-red-200 transition-colors">Ban User</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOLLOW LIST MODAL -->
         <div id="follow-list-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[95] hidden flex items-center justify-center p-4">
              <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-slide-up h-[500px] flex flex-col">
                  <div class="flex justify-between items-center p-4 border-b border-slate-100">
@@ -475,7 +523,6 @@
                    <div id="tag-list" class="space-y-1"></div>
                 </div>
                 
-                <!-- User Tag Picker -->
                 <div id="user-tag-picker" class="hidden absolute bottom-20 right-32 bg-white border border-slate-200 shadow-xl rounded-lg p-2 w-56 z-50 max-h-48 overflow-y-auto custom-scrollbar">
                    <div id="user-tag-list" class="space-y-1"></div>
                 </div>
@@ -490,95 +537,13 @@
                  <p class="text-slate-500 text-sm mb-6">This action cannot be undone.</p>
                  <div class="flex gap-3 justify-center">
                      <button onclick="closeDeleteModal()" class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium">Cancel</button>
-                     <button onclick="confirmDelete()" class="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium">Delete</button>
+                     <button onclick="executeDelete()" class="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium">Delete</button>
                  </div>
              </div>
         </div>
 
-        <!-- CALL INTERFACE (NEW) -->
-        <div id="call-interface" class="hidden fixed inset-0 z-[100] bg-slate-900 flex items-center justify-center">
-            <div class="relative w-full h-full max-w-5xl max-h-[90vh] bg-black md:rounded-2xl overflow-hidden flex flex-col">
-                <!-- Header -->
-                <div class="absolute top-0 left-0 w-full p-4 bg-gradient-to-b from-black/70 to-transparent z-10 flex justify-between items-center text-white">
-                    <div class="flex items-center gap-3">
-                        <i id="call-icon-indicator" class="fa-solid fa-video text-red-500 animate-pulse"></i>
-                        <span id="call-status-text" class="font-medium">Connecting...</span>
-                    </div>
-                </div>
-
-                <!-- Main Video Area -->
-                <div class="relative flex-grow bg-slate-800 flex items-center justify-center overflow-hidden">
-                    <!-- Remote Video (Full Screen) -->
-                    <video id="remoteVideo" autoplay playsinline class="w-full h-full object-cover"></video>
-                    
-                    <!-- Local Video (Picture in Picture) -->
-                    <div class="absolute bottom-4 right-4 w-32 h-48 md:w-48 md:h-64 bg-slate-900 rounded-xl overflow-hidden border-2 border-slate-700 shadow-2xl">
-                        <video id="localVideo" autoplay muted playsinline class="w-full h-full object-cover"></video>
-                    </div>
-                    
-                    <!-- Audio Only Avatar Placeholder -->
-                    <div id="audio-call-placeholder" class="hidden absolute inset-0 flex items-center justify-center bg-slate-900 z-20">
-                        <div class="text-center">
-                            <div class="w-32 h-32 rounded-full bg-slate-700 flex items-center justify-center mx-auto mb-4 animate-pulse">
-                                <i class="fa-solid fa-user text-6xl text-slate-400"></i>
-                            </div>
-                            <h2 class="text-2xl font-bold text-white">Audio Call</h2>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Controls -->
-                <div class="p-6 bg-slate-900 flex justify-center gap-6">
-                    <button id="btn-toggle-mic" onclick="toggleAudio()" class="w-12 h-12 rounded-full bg-slate-700 hover:bg-slate-600 text-white flex items-center justify-center transition-all"><i class="fa-solid fa-microphone"></i></button>
-                    <button id="btn-toggle-cam" onclick="toggleVideo()" class="w-12 h-12 rounded-full bg-slate-700 hover:bg-slate-600 text-white flex items-center justify-center transition-all"><i class="fa-solid fa-video"></i></button>
-                    <button onclick="endCall()" class="w-14 h-14 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center transition-all shadow-lg shadow-red-900/50"><i class="fa-solid fa-phone-slash text-xl"></i></button>
-                </div>
-            </div>
-        </div>
-
-        <!-- INCOMING CALL MODAL (NEW) -->
-        <div id="incoming-call-modal" class="hidden fixed top-4 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-2xl z-[110] border border-blue-100 flex items-center gap-4 animate-slide-up w-max max-w-[90vw]">
-            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center animate-pulse-slow">
-                <i class="fa-solid fa-phone-volume text-blue-600 text-xl"></i>
-            </div>
-            <div>
-                <h3 class="font-bold text-slate-800">Incoming Call...</h3>
-                <p id="caller-name-display" class="text-xs text-slate-500">User is calling you</p>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="declineCall()" class="w-10 h-10 rounded-full bg-red-100 hover:bg-red-200 text-red-600 flex items-center justify-center transition-colors"><i class="fa-solid fa-xmark"></i></button>
-                <button onclick="answerCall()" class="w-10 h-10 rounded-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-colors shadow-lg shadow-green-200"><i class="fa-solid fa-phone text-sm"></i></button>
-            </div>
-        </div>
-        
-        <!-- Mobile Bottom Nav -->
-        <div class="md:hidden fixed bottom-0 w-full bg-white/90 backdrop-blur border-t border-slate-200 h-16 flex justify-around items-center z-40 pb-safe">
-            <button onclick="router('feed')" class="mobile-nav-item flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 gap-1 w-12 transition-colors">
-                <i class="fa-solid fa-house text-xl"></i>
-                <span class="text-[10px] font-medium">Home</span>
-            </button>
-            <button onclick="router('network')" class="mobile-nav-item flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 gap-1 w-12 transition-colors">
-                <i class="fa-solid fa-user-group text-xl"></i>
-                <span class="text-[10px] font-medium">Network</span>
-            </button>
-            <div class="relative -top-5">
-                <button onclick="openPostModal()" class="w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full text-white flex items-center justify-center shadow-lg shadow-blue-500/30 transform transition-transform active:scale-95">
-                    <i class="fa-solid fa-plus text-2xl"></i>
-                </button>
-            </div>
-             <button onclick="router('messaging')" id="mobile-nav-messaging" class="mobile-nav-item flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 gap-1 w-12 transition-colors relative">
-                <i class="fa-brands fa-facebook-messenger text-xl"></i>
-                <span class="text-[10px] font-medium">Chat</span>
-                <div id="mobile-chat-badge" class="absolute top-0 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white hidden"></div>
-            </button>
-            <button onclick="viewMyProfile()" id="mobile-nav-profile" class="mobile-nav-item flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 gap-1 w-12 transition-colors">
-                <img id="mobile-nav-avatar" src="https://placehold.co/100x100" class="w-6 h-6 rounded-full object-cover ring-2 ring-transparent group-hover:ring-slate-200">
-                <span class="text-[10px] font-medium">Profile</span>
-            </button>
-        </div>
     </div>
 
-    <!-- MAIN SCRIPT -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, sendPasswordResetEmail, updateProfile, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
@@ -600,12 +565,15 @@
         const app = initializeApp(luminiConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = "lumini_v1"; // Namespace for database
+        const appId = "lumini_v1";
+
+        // ADMIN
+        const ADMIN_EMAIL = "tenzing.jangseld2023@academy.bt";
 
         // State
         window.currentUser = null;
-        window.allChats = []; // Global chat cache
-        window.currentViewedUid = null; // To track whose profile we are viewing
+        window.allChats = []; 
+        window.currentViewedUid = null;
         let unsubscribePosts = null;
         let unsubscribeChatList = null;
         let unsubscribeMessages = null;
@@ -616,11 +584,76 @@
         let allPostsCache = []; 
         let allUsersCache = [];
         let allNotifications = [];
-        let postToDeleteId = null;
+        let postToDeleteId = null; // NEW: Track owner for admin notification
         let editModeId = null;
         let currentAttachment = null;
-        window.taggedUsers = []; // NEW: Array of user objects {id, name}
+        window.taggedUsers = [];
         
+        // --- ADMIN MODAL LOGIC ---
+        let userToBanId = null;
+        let userToBanCurrentStatus = false;
+
+        window.toggleBan = (uid, currentStatus) => {
+            userToBanId = uid;
+            userToBanCurrentStatus = currentStatus;
+            
+            const modal = document.getElementById('ban-modal');
+            const title = document.getElementById('ban-modal-title');
+            const desc = document.getElementById('ban-modal-desc');
+            const btn = document.getElementById('confirm-ban-btn');
+            const iconContainer = document.getElementById('ban-icon-container');
+            const icon = document.getElementById('ban-icon');
+
+            if (currentStatus) {
+                // Unban State
+                title.innerText = "Unban User?";
+                desc.innerText = "They will regain access to Lumini immediately.";
+                btn.innerText = "Unban User";
+                btn.classList.remove('bg-red-600', 'hover:bg-red-700', 'shadow-red-200');
+                btn.classList.add('bg-green-600', 'hover:bg-green-700', 'shadow-green-200');
+                iconContainer.classList.remove('bg-red-100');
+                iconContainer.classList.add('bg-green-100');
+                icon.classList.remove('text-red-600', 'fa-gavel');
+                icon.classList.add('text-green-600', 'fa-unlock');
+            } else {
+                // Ban State
+                title.innerText = "Ban User?";
+                desc.innerText = "They will be immediately logged out and lose access.";
+                btn.innerText = "Ban User";
+                btn.classList.remove('bg-green-600', 'hover:bg-green-700', 'shadow-green-200');
+                btn.classList.add('bg-red-600', 'hover:bg-red-700', 'shadow-red-200');
+                iconContainer.classList.remove('bg-green-100');
+                iconContainer.classList.add('bg-red-100');
+                icon.classList.remove('text-green-600', 'fa-unlock');
+                icon.classList.add('text-red-600', 'fa-gavel');
+            }
+            
+            modal.classList.remove('hidden');
+        };
+
+        window.closeBanModal = () => {
+            document.getElementById('ban-modal').classList.add('hidden');
+            userToBanId = null;
+        };
+
+        window.executeBan = async () => {
+            if (!userToBanId) return;
+            
+            const newStatus = !userToBanCurrentStatus;
+            
+            try {
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', userToBanId), {
+                    isBanned: newStatus
+                });
+                closeBanModal();
+                // Refresh the profile view to show updated button state
+                viewProfile(userToBanId);
+            } catch (e) {
+                console.error("Error banning user:", e);
+                alert("Failed to update ban status.");
+            }
+        };
+
         // --- CALL STATE ---
         let localStream = null;
         let remoteStream = null;
@@ -640,6 +673,25 @@
         // Auth Listener
         onAuthStateChanged(auth, async (user) => {
             if (user) {
+                
+                // BAN CHECK
+                const userDirRef = doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', user.uid);
+                const userDirSnap = await getDoc(userDirRef);
+                if (userDirSnap.exists() && userDirSnap.data().isBanned) {
+                    await signOut(auth);
+                    document.getElementById('auth-error').innerText = "Account Banned: Access revoked by Admin.";
+                    document.getElementById('auth-error').classList.remove('hidden');
+                    document.getElementById('auth-overlay').classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+                    return;
+                }
+
+                // Admin Check: Mark user as admin in directory for easy lookup
+                if (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+                     if (userDirSnap.exists()) {
+                         await updateDoc(userDirRef, { isAdmin: true });
+                     }
+                }
+
                 currentUser = user;
                 window.currentUser = user;
                 
@@ -653,10 +705,6 @@
                      await updateProfile(user, { photoURL: defaultAvatar });
                 }
 
-                // Register user in public directory if missing
-                const userDirRef = doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', user.uid);
-                const userDirSnap = await getDoc(userDirRef);
-                
                 if (!userDirSnap.exists()) {
                     await setDoc(userDirRef, {
                         name: user.displayName || user.email.split('@')[0],
@@ -1079,7 +1127,6 @@
                 renderNetwork(u);
                 // Also update chat list names/statuses if open
                 if(window.allChats.length) renderChatList(window.allChats);
-                // Update tag picker
                 renderTaggedUsers(); // Ensure tag UI reflects current cache
             });
 
@@ -1113,11 +1160,7 @@
                     if(!n.read) unreadCount++;
                 });
                 const badge = document.getElementById('notification-badge');
-                if(unreadCount > 0) {
-                    badge.style.display = 'block';
-                } else {
-                    badge.style.display = 'none';
-                }
+                if(badge) badge.style.display = unreadCount > 0 ? 'block' : 'none';
                 renderNotificationsList();
             });
         }
@@ -1137,7 +1180,8 @@
                 else if(n.type === 'follow') { content = `started following you.`; icon = 'fa-user-plus'; }
                 else if(n.type === 'mention') { content = `mentioned you in a post.`; icon = 'fa-at'; iconColor = 'text-purple-500'; }
                 else if(n.type === 'tag') { content = `tagged you in a post.`; icon = 'fa-tag'; iconColor = 'text-green-500'; } // NEW
-                
+                else if (n.type === 'admin_delete') { content = `removed your post for violating guidelines.`; icon = 'fa-trash'; iconColor = 'text-red-600'; } // ADMIN DELETE NOTIF
+
                 return `
                 <div class="flex items-start gap-3 p-2 hover:bg-slate-50 rounded-lg cursor-pointer ${n.read ? 'opacity-60' : 'bg-blue-50/50'}" onclick="handleNotificationClick('${n.id}', '${n.type}', '${n.postId || ''}', '${n.fromUid}')">
                     <div class="mt-1"><i class="fa-solid ${icon} ${iconColor}"></i></div>
@@ -1164,6 +1208,7 @@
              } else if (type === 'follow') {
                  viewProfile(fromUid);
              }
+             // Admin delete notifications don't need navigation, just marking as read is enough
         };
 
         function monitorChats() {
@@ -1182,8 +1227,8 @@
                 });
                 const badge = document.getElementById('chat-badge');
                 const mobileBadge = document.getElementById('mobile-chat-badge');
-                if(hasUnread) { badge.style.display = 'block'; mobileBadge.style.display = 'block'; }
-                else { badge.style.display = 'none'; mobileBadge.style.display = 'none'; }
+                if(badge) badge.style.display = hasUnread ? 'block' : 'none';
+                if(mobileBadge) mobileBadge.style.display = hasUnread ? 'block' : 'none';
                 window.allChats = chats;
                 renderChatList(chats);
             });
@@ -1249,7 +1294,6 @@
             });
             router('messaging');
             
-            // Responsive Logic
             if(window.innerWidth < 768) {
                 document.getElementById('msg-list-col').classList.add('hidden');
                 document.getElementById('msg-chat-col').classList.remove('hidden');
@@ -1302,7 +1346,6 @@
             // FIXED: Force re-render of saved posts when view is accessed
             if(view === 'saved') renderSavedPosts();
             
-            // Reset mobile messaging state
             if(view === 'messaging' && window.innerWidth < 768 && !currentChatId) {
                  backToChatList();
             }
@@ -1361,21 +1404,32 @@
              // 1. Determine current state
              const isSaved = mySavedPosts.includes(postId);
              
-             // 2. Optimistic Local Update (IMMEDIATE - SINGLE SOURCE OF TRUTH FIX)
+             // 2. Optimistic Local Update
              if(isSaved) {
-                 // Remove locally
                  const idx = mySavedPosts.indexOf(postId);
                  if (idx > -1) mySavedPosts.splice(idx, 1);
              } else {
-                 // Add locally
                  mySavedPosts.push(postId);
              }
              
-             // 3. Force Re-render ALL icons for this post ID to match new state
-             const allSaveIcons = document.querySelectorAll(`.fa-bookmark`);
-             // We need to target only the icons related to this post ID across feeds
-             // But simplistic re-render of feed is safer to ensure consistency
-             renderFeed(allPostsCache);
+             // 3. Render UI Immediately
+             // This handles the specific button clicked without re-rendering the whole list yet
+             const btnIcons = document.querySelectorAll(`#post-${postId}-feed .fa-bookmark, #post-${postId}-saved .fa-bookmark, #post-${postId}-profile .fa-bookmark`);
+             btnIcons.forEach(btnIcon => {
+                 if(isSaved) { // Removing
+                     btnIcon.classList.remove('fa-solid', 'text-purple-600');
+                     btnIcon.classList.add('fa-regular');
+                 } else { // Adding
+                     btnIcon.classList.remove('fa-regular');
+                     btnIcon.classList.add('fa-solid', 'text-purple-600');
+                 }
+                 // Update Text if present (in menu)
+                 const btnText = btnIcon.parentElement; 
+                 if(btnText && btnText.innerText.includes('Save')) {
+                     btnText.innerText = isSaved ? 'Save' : 'Unsave'; // Inverse logic because we just toggled
+                 }
+             });
+             
              if(!document.getElementById('view-saved').classList.contains('hidden')) {
                  renderSavedPosts();
              }
@@ -1389,7 +1443,7 @@
                      await updateDoc(userRef, { savedPosts: arrayUnion(postId) });
                  }
              } catch(e) {
-                 console.error("Save failed, reverting UI", e);
+                 console.error("Save failed", e);
                  // Revert if failed
                  if(isSaved) mySavedPosts.push(postId); 
                  else { 
@@ -1407,15 +1461,23 @@
             const hasLiked = post.likedBy && post.likedBy.includes(currentUser.uid);
             const isSaved = mySavedPosts.includes(post.id);
             const likeIconClass = hasLiked ? "fa-solid text-blue-600" : "fa-regular";
-            // FIX: Ensure the correct class is applied based on `isSaved` check
             const saveIconClass = isSaved ? "fa-solid text-purple-600" : "fa-regular";
+            const saveText = isSaved ? "Unsave" : "Save";
             
-            // Render Tagged Users
             let taggedHTML = '';
             if(post.taggedUsers && post.taggedUsers.length > 0) {
                 const names = post.taggedUsers.map(u => `<span class="font-bold hover:underline cursor-pointer" onclick="viewProfile('${u.id}')">${u.name}</span>`).join(', ');
                 taggedHTML = ` <span class="text-slate-500 font-normal">is with ${names}</span>`;
             }
+            
+            // Admin Check (Case Insensitive)
+            const isAdmin = currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+            const canDelete = currentUser.uid === post.uid || isAdmin;
+            const canEdit = currentUser.uid === post.uid;
+
+            // Determine if post author is admin
+            const postAuthorIsAdmin = allUsersCache.find(u => u.id === post.uid)?.isAdmin;
+            const adminBadge = postAuthorIsAdmin ? `<span class="admin-badge">Admin 🛡️</span>` : '';
 
             return `<div id="post-${post.id}-${context}" class="glass-card rounded-2xl bg-white p-0 overflow-hidden animate-fade-in mb-4">
                 <div class="p-4 flex gap-3">
@@ -1424,18 +1486,16 @@
                         <div class="flex justify-between items-start">
                             <div>
                                 <h4 class="font-bold text-slate-800 text-sm">
-                                    <span class="hover:underline cursor-pointer" onclick="viewProfile('${post.uid}')">${post.name}</span>${taggedHTML}
+                                    <span class="hover:underline cursor-pointer" onclick="viewProfile('${post.uid}')">${post.name}</span>${adminBadge}${taggedHTML}
                                 </h4>
                                 <p class="text-xs text-slate-400">${post.headline || 'Member'}</p>
                             </div>
                             <div class="relative">
                                 <button onclick="toggleMenu('${post.id}', '${context}')" class="text-slate-400 hover:bg-slate-100 w-8 h-8 rounded-full"><i class="fa-solid fa-ellipsis"></i></button>
                                 <div id="menu-${post.id}-${context}" class="hidden absolute right-0 top-8 bg-white shadow-xl border border-slate-100 rounded-xl py-2 w-32 z-10">
-                                    <button onclick="savePost('${post.id}')" class="w-full text-left px-4 py-2 text-slate-600 hover:bg-slate-50 text-sm font-medium">${isSaved ? 'Unsave' : 'Save'}</button>
-                                    ${currentUser.uid === post.uid ? `
-                                        <button onclick="editPost('${post.id}')" class="w-full text-left px-4 py-2 text-slate-600 hover:bg-slate-50 text-sm font-medium">Edit</button>
-                                        <button onclick="deletePost('${post.id}')" class="w-full text-left px-4 py-2 text-red-500 hover:bg-red-50 text-sm font-bold">Delete</button>
-                                    ` : ''}
+                                    <button onclick="savePost('${post.id}')" class="w-full text-left px-4 py-2 text-slate-600 hover:bg-slate-50 text-sm font-medium">${saveText}</button>
+                                    ${canEdit ? `<button onclick="editPost('${post.id}')" class="w-full text-left px-4 py-2 text-slate-600 hover:bg-slate-50 text-sm font-medium">Edit</button>` : ''}
+                                    ${canDelete ? `<button onclick="initiateDelete('${post.id}', '${post.uid}')" class="w-full text-left px-4 py-2 text-red-500 hover:bg-red-50 text-sm font-bold">Delete</button>` : ''}
                                 </div>
                             </div>
                         </div>
@@ -1737,14 +1797,40 @@
              document.getElementById('attachment-preview').classList.add('hidden');
         };
 
-        window.deletePost = (pid) => { postToDeleteId = pid; document.getElementById('delete-modal').classList.remove('hidden', 'opacity-0'); };
-        window.closeDeleteModal = () => { postToDeleteId = null; document.getElementById('delete-modal').classList.add('hidden', 'opacity-0'); };
-        window.confirmDelete = async () => {
+        let postToDeleteOwnerUid = null;
+
+        window.initiateDelete = (pid, ownerUid) => {
+            postToDeleteId = pid;
+            postToDeleteOwnerUid = ownerUid;
+            document.getElementById('delete-modal').classList.remove('hidden', 'opacity-0');
+        };
+
+        window.closeDeleteModal = () => {
+            postToDeleteId = null;
+            postToDeleteOwnerUid = null;
+            document.getElementById('delete-modal').classList.add('hidden', 'opacity-0');
+        };
+
+        // Updated delete logic for Admin notifications
+        window.executeDelete = async () => {
              if(postToDeleteId) {
                  await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'posts', postToDeleteId));
+                 
+                 // Check if Admin is deleting someone else's post
+                 if(currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase() && postToDeleteOwnerUid !== currentUser.uid) {
+                     await addDoc(collection(db, 'artifacts', appId, 'users', postToDeleteOwnerUid, 'notifications'), {
+                        type: 'admin_delete',
+                        fromUid: 'admin',
+                        fromName: 'Lumini Admin',
+                        read: false,
+                        createdAt: serverTimestamp()
+                     });
+                 }
              }
              closeDeleteModal();
         };
+
+        window.confirmDelete = window.executeDelete; // Map modal button to execution function
 
         window.handleFileSelect = (input) => {
              if(input.files && input.files[0]) {
@@ -1846,6 +1932,22 @@
              document.getElementById('profile-followers-count').innerText = followerCount;
              document.getElementById('profile-following-count').innerText = followingCount;
              
+             // ADMIN CONTROL
+             if (currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase() && uid !== currentUser.uid) {
+                 const isBanned = user.isBanned || false;
+                 let adminControls = document.getElementById('admin-controls-container');
+                 adminControls.innerHTML = `
+                     <div class="mt-4 pt-4 border-t border-red-100">
+                         <h4 class="text-xs font-bold text-red-500 uppercase mb-2">Admin Controls</h4>
+                         <button onclick="toggleBan('${uid}', ${isBanned})" class="bg-red-100 text-red-600 px-4 py-2 rounded-lg font-bold text-xs hover:bg-red-200 transition-colors">
+                             ${isBanned ? 'Unban User' : 'Ban User'}
+                         </button>
+                     </div>
+                 `;
+             } else {
+                 document.getElementById('admin-controls-container').innerHTML = '';
+             }
+
              const userPosts = allPostsCache.filter(p => p.uid === uid);
              document.getElementById('profile-content-posts').innerHTML = userPosts.length ? userPosts.map(p => createPostHTML(p, 'profile')).join('') : '<p class="text-center text-slate-400 py-8">No posts yet.</p>';
              
@@ -1962,6 +2064,9 @@
             if(!e.target.closest('.relative')) {
                 document.getElementById('profile-menu').classList.add('hidden');
                 document.getElementById('notification-dropdown').classList.add('hidden');
+                document.getElementById('emoji-picker').classList.add('hidden');
+                document.getElementById('tag-picker').classList.add('hidden');
+                document.getElementById('user-tag-picker').classList.add('hidden');
             }
         });
 
